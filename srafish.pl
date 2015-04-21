@@ -137,8 +137,11 @@ while (<$query_results>) {
 	
 
  	
-
-	if (-e "$out/$run/logs/sailfish_completed") {
+	# For now check if quant.sf has been output by sailfish.
+	# If so, we'll assume it completed successfully and that this run
+	# has already been processed. We might want to implement a more
+	# rigorous check of the sailfish log later.
+	if (-e "$out/$run/quant.sf") {
 		print  "Experiment $run already analysed. skipping . . .\n";
 		$i++;
 		next;
@@ -166,11 +169,6 @@ while (<$query_results>) {
         }
         print "EXECUTING: $cmd\n";
         system($cmd);
-        
-        # Output a simple file in the Sailfish logs after Sailfish is done running.
-        # If we get to this statement, then all of the relevant code for processing
-        # this sample has been run.
-        system("touch $out/$run/logs/sailfish_completed");
         
  		print  "Run $run finished! ", ($i / $queries) * 100, " % done.\n";
 		$i++;
