@@ -194,6 +194,7 @@ while (<$query_results>) {
 			while (<$logfile>){
 				$check_success = 1 if /g2log\ file\ shutdown/i;
 			}
+			close $logfile;
 		}
         
 		if ($check_success) {
