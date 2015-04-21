@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# srafish.pl - v0.11
+# srafish.pl - v0.12
 # by Surge Biswas, Konstantin Kerner
 
 ######### UPDATE HISTORY ######################################################
@@ -25,7 +25,10 @@
 #
 #                    Kept --split-files on for all fastq-dump calls.
 #
-#		     Added Sailfish call
+#		             Added Sailfish call
+#                
+#                    added checkpoint for successful sailfish execution based
+#                    on the composition of the sailfish logfile.
 ###############################################################################
 
 
@@ -41,7 +44,7 @@ my $cwd = getcwd;
 my $MAGIC_INDEX_DIR = "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
 my $NTHREADS = 6;
 my $query;
-my $out 					= $cwd;
+my $out 				= $cwd;
 my $query_table;
 my $help;
 
@@ -121,6 +124,7 @@ my $library_name;
 my $layout;
 my $genotype;
 my $cmd;
+my $check_success;
 
 while (<$query_results>) {
 
@@ -162,23 +166,43 @@ while (<$query_results>) {
         if (-e "$out/$run/$run\_2.fastq") {
             # Data is paired end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=PE:O=><:S=U -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
-	    print "EXECUTING: $cmd\n";
+	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
-	    system("rm $out/$run/$run\_1.fastq");
-	    system("rm $out/$run/$run\_2.fastq");
+	    	system("rm $out/$run/$run\_1.fastq");
+	    	system("rm $out/$run/$run\_2.fastq");
         }
         else {
             # Data is single end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=SE:S=U -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
-	    print "EXECUTING: $cmd\n";
+	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
 	    system("rm $out/$run/$run\_1.fastq");
         }
         
+		$check_success = 0;
+		
+		if (-e "$out/$run/logs/") {
+			
+			opendir LOG, "$out/$run/logs/" or die $!;
+			my @findlogfile = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
+			closedir LOG;
+						
+			open my $logfile, "<$out/$run/logs/@findlogfile" or print "cannot find logfile for run $run!\n";
+			
+			while (<$logfile>){
+				$check_success = 1 if /g2log\ file\ shutdown/i;
+			}
+		}
         
- 		print  "Run $run finished! ", ($i / $queries) * 100, " % done.\n";
+		if ($check_success) {
+			print  "Run $run finished successfully! ", ($i / $queries) * 100, " % done.\n";
+		}
+		else {
+			print "odd looking logfile for run $run. check sailfish logfile @logfile.\n";
+			print "proceeding anyway. ", ($i / $queries) * 100, " % done.\n";
+		}
 		$i++;
 	}
 }
