@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 # srafish.pl - v0.11
 # by Surge Biswas, Konstantin Kerner
@@ -11,6 +11,21 @@
 #                    insensitive) is identified in column "library name", the
 #                    respective reference matrix will be used. if no genotype
 #                    can be identified, col reference will be used.
+#
+# (21-04-15) v0.12 - Added comments to code.
+#
+#                    Changed $experiment variable to
+#                    $run because 'experiments' are SRX... and can be shared
+#                    across samples. 'Runs' however are unique SRR or ERR IDs.
+#
+#                    Changed chdir calls from $cwd/$out to simply $out. I did
+#                    this because if out is a relative path, it will be created
+#                    as such (no need to specify the working directory). If
+#                    its a full path, then having $cwd/$out doesn't make sense.
+#
+#                    Kept --split-files on for all fastq-dump calls.
+#
+#		     Added Sailfish call
 ###############################################################################
 
 
@@ -23,8 +38,10 @@ use Cwd;
 
 my $cwd = getcwd;
 
+my $MAGIC_INDEX_DIR = "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
+my $NTHREADS = 6;
 my $query;
-my $out 					= "";
+my $out 					= $cwd;
 my $query_table;
 my $help;
 
@@ -48,28 +65,35 @@ USAGE: srafish.pl -q 'query' -o /path/to/out(optional)
 	
 USAGE
 
-unless $query or $query_table;
 
+## 0. Parameter checks.
+unless $query or $query_table;
+$out =~ s/\/$//g;
+
+
+
+## 1. Prepare query table.
 if ($query and $query_table) {
 	die "query AND table specified. please choose only one of these two options.";
 }
 
-chdir "$cwd/$out" if $out;
 
 my $queries = 0;
-
 if ($query_table) {
-	
+    # User provided a query table.
+    
 	open my $query_count, "<$query_table" or die $!;
 	<$query_count>;
 	$queries++ while <$query_count>;
 	close $query_count;
-	print STDERR "\nquery table found at $query_table! $queries queries identified\n";
+	print  "\nquery table found at $query_table! $queries queries identified\n";
 }
 
 else {
-	$query_table = "query_results.csv";
-	print STDERR "\nBuilding Query table . . .\n\n";	
+    # User provided a query that we need to build a table from.
+    
+	$query_table = "$out/query_results.csv";
+	print  "\nBuilding Query table . . .\n\n";	
 	system("wget -O $query_table 'http://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?save=efetch&db=sra&rettype=runinfo&term=$query'");
 	
 	
@@ -77,63 +101,76 @@ else {
 	<$query_count>;
 	$queries++ while <$query_count>;
 	close $query_count;
-	print STDERR "query table finished! $queries datasets identified\n";
+	print  "query table finished! $queries datasets identified\n";
 }
-	
+
+
+
+
+
+
+
+## 2. Process (fastq-dump and sailfish) query results.
 open my $query_results, "<$query_table" or die $!;
 
 <$query_results>; #skip header
 
 my $i = 1;
-my $experiment;
+my $run;
 my $library_name;
 my $layout;
 my $genotype;
+my $cmd;
 
 while (<$query_results>) {
 
 	chomp;
 	
-	$_ =~ s/\".+?\"//g;
+    # replace dates within quotes with empty string. These interfere with comma parsing.
+    $_ =~ s/\".+?\"//g;
 
 	my @line = split(/,/, $_);
 
-	$experiment = $line[0];
+	$run = $line[0];
 	$library_name = $line[11];
 	$layout = $line[15];
 	
 
- 	system("mkdir $cwd/$out/$experiment");
-
-	if (-e "$cwd/$out/$experiment/quant.sf") {
-		print STDERR "experiment $experiment already analysed. skipping . . .\n";
+ 	
+	# For now check if quant.sf has been output by sailfish.
+	# If so, we'll assume it completed successfully and that this run
+	# has already been processed. We might want to implement a more
+	# rigorous check of the sailfish log later.
+	if (-e "$out/$run/quant.sf") {
+		print  "Experiment $run already analysed. skipping . . .\n";
 		$i++;
 		next;
 	}
 	
 	else {
-		
 		$genotype = &determine_genotype ($library_name);
 		
-		chdir "$cwd/$out/$experiment";
- 		if ($layout =~ /paired/i) {
-			print STDERR "\nfetching experiment: $experiment. Layout: $layout. Genotype: $genotype . . .\n";
-			system("fastq-dump -I --split-files $experiment");
-		}
-	   
- 		elsif ($layout =~ /single/i) {
-			print STDERR "\nfetching experiment: $experiment. Layout: $layout. Genotype: $genotype . . .\n";
-			system("fastq-dump $experiment");
-		}
-	   
- 		else {
-			print STDERR "\nfetching experiment: $experiment. Layout: NOT SPECIFIED! $layout treating as single. Genotype: $genotype . . .\n";
-			system("fastq-dump $experiment");
-		}
-		
-		#SAILFISH HERE
-		chdir "$cwd/$out";
- 		print STDERR "experiment $experiment finished! ", ($i / $queries) * 100, " % done.\n";
+        # Get the data as a FASTQ. Always have --split-files on. In the case the
+        # data is SE, it will only create a _1.fastq file.
+        print  "\nFetching run: $run. Genotype: $genotype . . .\n";
+        $cmd = "fastq-dump -I --split-files --outdir $out/$run $run";
+        print "EXECUTING: $cmd\n";
+        system($cmd);
+        
+        # Run sailfish.
+        print  "Running sailfish  . . .\n";
+        if (-e "$out/$run/$run\_2.fastq") {
+            # Data is paired end.
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=PE:O=><:S=U -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
+        }
+        else {
+            # Data is single end.
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=SE:S=U -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
+        }
+        print "EXECUTING: $cmd\n";
+        system($cmd);
+        
+ 		print  "Run $run finished! ", ($i / $queries) * 100, " % done.\n";
 		$i++;
 	}
 }
