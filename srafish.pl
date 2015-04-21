@@ -162,13 +162,21 @@ while (<$query_results>) {
         if (-e "$out/$run/$run\_2.fastq") {
             # Data is paired end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=PE:O=><:S=U -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
+	    print "EXECUTING: $cmd\n";
+            system($cmd);
+	    
+	    system("rm $out/$run/$run\_1.fastq");
+	    system("rm $out/$run/$run\_2.fastq");
         }
         else {
             # Data is single end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=SE:S=U -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
+	    print "EXECUTING: $cmd\n";
+            system($cmd);
+	    
+	    system("rm $out/$run/$run\_1.fastq");
         }
-        print "EXECUTING: $cmd\n";
-        system($cmd);
+        
         
  		print  "Run $run finished! ", ($i / $queries) * 100, " % done.\n";
 		$i++;
