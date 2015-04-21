@@ -200,7 +200,7 @@ while (<$query_results>) {
 			print  "Run $run finished successfully! ", ($i / $queries) * 100, " % done.\n";
 		}
 		else {
-			print "odd looking logfile for run $run. check sailfish logfile @logfile.\n";
+			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
 			print "proceeding anyway. ", ($i / $queries) * 100, " % done.\n";
 		}
 		$i++;
