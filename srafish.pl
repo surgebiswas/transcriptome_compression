@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# srafish.pl - v0.12
+# srafish.pl - v0.13
 # by Surge Biswas, Konstantin Kerner
 
 ######### UPDATE HISTORY ######################################################
@@ -29,6 +29,14 @@
 #                
 #                    added checkpoint for successful sailfish execution based
 #                    on the composition of the sailfish logfile.
+#
+# (22-04-15) v0.13 - changed checkpoint 1: "check if run is already processed"
+#                    into a subroutine.
+#
+#                    added checkpoint 2: "parse sailfish log".
+#
+#                    re-arranged data transfer. downloading .sra files will
+#                    now be managed by the slave script fishhook.pl.
 ###############################################################################
 
 
@@ -38,21 +46,25 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use Cwd;
+#use IPC::System::Simple qw(system);
 
 my $cwd = getcwd;
 
-my $MAGIC_INDEX_DIR = "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
-my $NTHREADS = 6;
+my $MAGIC_INDEX_DIR 	= "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
+my $NTHREADS 			= 6;
 my $query;
 my $out 				= $cwd;
 my $query_table;
 my $help;
+my $download_protocol;
 
 GetOptions(
 	"query=s"			=> \$query,
 	"out=s"				=> \$out,
 	"table=s"			=> \$query_table,
+	"dlprotcl"			=> \$download_protocol,
 	"help"				=> \$help,
+
 );
 
 die <<USAGE
@@ -64,6 +76,7 @@ USAGE: srafish.pl -q 'query' -o /path/to/out(optional)
 	-t		use an already existing query table
 	
 	-o		path of your output directory
+	-d		download protocol to be used (-d aspera|ftp - default:aspera)
 	-h		print this help message
 	
 USAGE
@@ -72,7 +85,7 @@ USAGE
 ## 0. Parameter checks.
 unless $query or $query_table;
 $out =~ s/\/$//g;
-
+$download_protocol = "aspera" unless $download_protocol;
 
 
 ## 1. Prepare query table.
@@ -124,7 +137,9 @@ my $library_name;
 my $layout;
 my $genotype;
 my $cmd;
-my $check_success;
+my $failfish;
+my $exists;
+
 
 while (<$query_results>) {
 
@@ -135,20 +150,16 @@ while (<$query_results>) {
 
 	my @line = split(/,/, $_);
 
-	$run = $line[0];
-	$library_name = $line[11];
-	$layout = $line[15];
+	$run			= $line[0];
+	$library_name	= $line[11];
+	$layout			= $line[15];
 	
-
- 	
-	# For now check if quant.sf has been output by sailfish.
-	# If so, we'll assume it completed successfully and that this run
-	# has already been processed. We might want to implement a more
-	# rigorous check of the sailfish log later.
-	if (-e "$out/$run/quant.sf") {
-		print  "Experiment $run already analysed. skipping . . .\n";
-		$i++;
-		next;
+	# checkpoint 1: check if run is already processed
+	
+	$exists = &already_processed($run);
+	
+	if ($exists){
+		print "run $run already processed! proceeding to next run . . .\n";
 	}
 	
 	else {
@@ -156,11 +167,10 @@ while (<$query_results>) {
 		
         # Get the data as a FASTQ. Always have --split-files on. In the case the
         # data is SE, it will only create a _1.fastq file.
-        print  "\nFetching run: $run. Genotype: $genotype . . .\n";
-        $cmd = "fastq-dump -I --split-files --outdir $out/$run $run";
-        print "EXECUTING: $cmd\n";
-        system($cmd);
-        
+		# call slave script fishhook.pl to download and unpack sra files
+		
+		system("./fishhook.pl $run $out $download_protocol");
+
         # Run sailfish.
         print  "Running sailfish  . . .\n";
         if (-e "$out/$run/$run\_2.fastq") {
@@ -178,34 +188,47 @@ while (<$query_results>) {
 	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
-	    system("rm $out/$run/$run\_1.fastq");
+	    	system("rm $out/$run/$run\_1.fastq");
         }
         
-		$check_success = 0;
+		# checkpoint 2: parse sailfish log and match for keywords that will always
+		# appear in the last line of a logfile from a successful sailfish
+		$failfish = &check_logfile($run);;
 		
-		if (-e "$out/$run/logs/") {
-			
-			opendir LOG, "$out/$run/logs/" or die $!;
-			my @findlogfile = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
-			closedir LOG;
-						
-			open my $logfile, "<$out/$run/logs/@findlogfile" or print "cannot find logfile for run $run!\n";
-			
-			while (<$logfile>){
-				$check_success = 1 if /g2log\ file\ shutdown/i;
-			}
-			close $logfile;
-		}
-        
-		if ($check_success) {
-			print  "Run $run finished successfully! ", ($i / $queries) * 100, " % done.\n";
-		}
-		else {
+		if ($failfish) {
 			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
 			print "proceeding anyway. ", ($i / $queries) * 100, " % done.\n";
+
+		}
+		else {
+			print  "Run $run finished successfully! ", ($i / $queries) * 100, " % done.\n";
 		}
 		$i++;
 	}
+}
+
+
+###############################################################################
+###############################################################################
+
+sub already_processed {
+	
+	my $processed = 0;
+	my $rundir = shift @_;
+	my @files_in_rundir;
+	
+	opendir RUN, "$out/$run/" or print "cannot open directory $out/$rundir\n";
+	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir RUN;
+	closedir RUN;
+	
+	for my $file_in_rundir (@files_in_rundir) {
+		
+		if ($file_in_rundir =~ /quant.sf/) {
+			$processed = 1;
+			last;
+		}
+	}
+	return $processed;
 }
 
 
@@ -249,3 +272,39 @@ sub determine_genotype {
 
 	return $final_genotype;
 }
+
+
+
+###############################################################################
+
+sub check_logfile {
+	
+	my $logfile_status = 1;
+	my $logdir = shift @_;
+	my @files_in_logdir;
+	my $logfilename;
+	
+	if (-e "$out/$run/logs/") {
+			
+		opendir LOG, "$out/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
+		my @files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
+		closedir LOG;
+		
+		for my $file_in_logdir (@files_in_logdir){
+			if ($file_in_logdir =~ /sailfish\.g2log\.{\d+}\-{\d+}\.log/) {
+				$logfilename = $1;
+				last;
+			} 
+		}
+		
+		open my $logfile, "<$logfilename" or print "cannot find logfile for run $run!\n";
+		
+		while (<$logfile>){
+			$logfile_status = 0 if /g2log\ file\ shutdown/i;
+		}
+		close $logfile;
+	}
+	return $logfile_status;
+}
+
+###############################################################################
