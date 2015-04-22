@@ -155,7 +155,8 @@ while (<$query_results>) {
 	$layout			= $line[15];
 	
 	# checkpoint 1: check if run is already processed
-	
+	system("mkdir $out/$run");
+
 	$exists = &already_processed($run);
 	
 	if ($exists){
@@ -217,9 +218,9 @@ sub already_processed {
 	my $rundir = shift @_;
 	my @files_in_rundir;
 	
-	opendir RUN, "$out/$run/" or print "cannot open directory $out/$rundir\n";
-	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir RUN;
-	closedir RUN;
+	opendir DIR, "$out/$run/" or print "cannot open directory $out/$rundir\n";
+	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir DIR;
+	closedir DIR;
 	
 	for my $file_in_rundir (@files_in_rundir) {
 		
@@ -291,7 +292,7 @@ sub check_logfile {
 		closedir LOG;
 		
 		for my $file_in_logdir (@files_in_logdir){
-			if ($file_in_logdir =~ /sailfish\.g2log\.{\d+}\-{\d+}\.log/) {
+			if ($file_in_logdir =~ /sailfish\.g2log.+\.log/) {
 				$logfilename = $1;
 				last;
 			} 

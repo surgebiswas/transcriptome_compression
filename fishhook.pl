@@ -22,7 +22,6 @@ my $BANDWIDTH	 = "100m";
 my $cmd;
 
 $outdir =~ s/\/$//g;
-system("mkdir $outdir/$srrid");
 
 	
 if ($method eq "aspera") {
