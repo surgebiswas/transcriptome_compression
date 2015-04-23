@@ -155,7 +155,8 @@ while (<$query_results>) {
 	$layout			= $line[15];
 	
 	# checkpoint 1: check if run is already processed
-	
+	system("mkdir $out/$run");
+
 	$exists = &already_processed($run);
 	
 	if ($exists){
@@ -175,7 +176,7 @@ while (<$query_results>) {
         print  "Running sailfish  . . .\n";
         if (-e "$out/$run/$run\_2.fastq") {
             # Data is paired end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=PE:O=><:S=U -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=PE:O=><:S=U' -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
@@ -184,7 +185,7 @@ while (<$query_results>) {
         }
         else {
             # Data is single end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=SE:S=U -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=SE:S=U' -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
@@ -193,7 +194,7 @@ while (<$query_results>) {
         
 		# checkpoint 2: parse sailfish log and match for keywords that will always
 		# appear in the last line of a logfile from a successful sailfish
-		$failfish = &check_logfile($run);;
+		$failfish = &check_logfile($out, $run);
 		
 		if ($failfish) {
 			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
@@ -217,9 +218,9 @@ sub already_processed {
 	my $rundir = shift @_;
 	my @files_in_rundir;
 	
-	opendir RUN, "$out/$run/" or print "cannot open directory $out/$rundir\n";
-	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir RUN;
-	closedir RUN;
+	opendir DIR, "$out/$run/" or print "cannot open directory $out/$rundir\n";
+	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir DIR;
+	closedir DIR;
 	
 	for my $file_in_rundir (@files_in_rundir) {
 		
@@ -279,25 +280,26 @@ sub determine_genotype {
 
 sub check_logfile {
 	
-	my $logfile_status = 1;
-	my $logdir = shift @_;
+	my $logfile_status	 = 1;
+	my $outdir		 = shift @_;
+	my $logdir		 = shift @_;
 	my @files_in_logdir;
 	my $logfilename;
 	
-	if (-e "$out/$run/logs/") {
+	if (-e "$outdir/$logdir/$run/logs/") {
 			
-		opendir LOG, "$out/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
+		opendir LOG, "$outdir/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
 		my @files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
 		closedir LOG;
 		
 		for my $file_in_logdir (@files_in_logdir){
-			if ($file_in_logdir =~ /sailfish\.g2log\.{\d+}\-{\d+}\.log/) {
-				$logfilename = $1;
+			if ($file_in_logdir =~ /sailfish\.g2log.+\.log/) {
+				$logfilename = $file_in_logdir;
 				last;
 			} 
 		}
 		
-		open my $logfile, "<$logfilename" or print "cannot find logfile for run $run!\n";
+		open my $logfile, "<$outdir/$logdir/logs/$logfilename" or print "cannot find logfile for run $run!\n";
 		
 		while (<$logfile>){
 			$logfile_status = 0 if /g2log\ file\ shutdown/i;
