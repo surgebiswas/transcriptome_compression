@@ -18,7 +18,7 @@ use Data::Dumper;
 my $srrid		 = shift;
 my $outdir		 = shift;
 my $method		 = shift;
-my $BANDWIDTH	 = "800m";
+my $BANDWIDTH	 = "400m";
 my $cmd;
 
 $outdir =~ s/\/$//g;

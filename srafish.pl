@@ -176,7 +176,7 @@ while (<$query_results>) {
         print  "Running sailfish  . . .\n";
         if (-e "$out/$run/$run\_2.fastq") {
             # Data is paired end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=PE:O=><:S=U -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=PE:O=><:S=U' -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
@@ -185,7 +185,7 @@ while (<$query_results>) {
         }
         else {
             # Data is single end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l T=SE:S=U -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
+            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=SE:S=U' -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
             system($cmd);
 	    
@@ -194,7 +194,7 @@ while (<$query_results>) {
         
 		# checkpoint 2: parse sailfish log and match for keywords that will always
 		# appear in the last line of a logfile from a successful sailfish
-		$failfish = &check_logfile($run);;
+		$failfish = &check_logfile($out, $run);
 		
 		if ($failfish) {
 			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
@@ -280,14 +280,15 @@ sub determine_genotype {
 
 sub check_logfile {
 	
-	my $logfile_status = 1;
-	my $logdir = shift @_;
+	my $logfile_status	 = 1;
+	my $outdir		 = shift @_;
+	my $logdir		 = shift @_;
 	my @files_in_logdir;
 	my $logfilename;
 	
-	if (-e "$out/$run/logs/") {
+	if (-e "$outdir/$logdir/$run/logs/") {
 			
-		opendir LOG, "$out/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
+		opendir LOG, "$outdir/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
 		my @files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
 		closedir LOG;
 		
@@ -298,7 +299,7 @@ sub check_logfile {
 			} 
 		}
 		
-		open my $logfile, "<$logfilename" or print "cannot find logfile for run $run!\n";
+		open my $logfile, "<$outdir/$logdir/logs/$logfilename" or print "cannot find logfile for run $run!\n";
 		
 		while (<$logfile>){
 			$logfile_status = 0 if /g2log\ file\ shutdown/i;
