@@ -293,7 +293,7 @@ sub check_logfile {
 		
 		for my $file_in_logdir (@files_in_logdir){
 			if ($file_in_logdir =~ /sailfish\.g2log.+\.log/) {
-				$logfilename = $1;
+				$logfilename = $file_in_logdir;
 				last;
 			} 
 		}

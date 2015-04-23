@@ -18,7 +18,7 @@ use Data::Dumper;
 my $srrid		 = shift;
 my $outdir		 = shift;
 my $method		 = shift;
-my $BANDWIDTH	 = "100m";
+my $BANDWIDTH	 = "800m";
 my $cmd;
 
 $outdir =~ s/\/$//g;
@@ -48,7 +48,7 @@ if ($method eq "aspera") {
 	system("rm $outdir/$srrid/$srrid.sra");
 }
 
-else {
+elsif ($method eq "ftp") {
 	
 	# download directly with fastq-dump (utilizes ftp protocol)
 	print  "\nFetching run: $srrid . . .\n";
@@ -56,4 +56,13 @@ else {
 	print "EXECUTING: $cmd\n";
 	system($cmd);
 	
+}
+
+else {
+
+	print "no download protocol specified. using ftp.\n";
+	print  "\nFetching run: $srrid . . .\n";
+        $cmd = "fastq-dump -I --split-files --outdir $outdir/$srrid $srrid";
+        print "EXECUTING: $cmd\n";
+        system($cmd);
 }
