@@ -22,7 +22,7 @@ my $BANDWIDTH	 = "400m";
 my $cmd;
 
 $outdir =~ s/\/$//g;
-
+mkdir($outdir);
 	
 if ($method eq "aspera") {
 	
@@ -33,26 +33,26 @@ if ($method eq "aspera") {
 	my $srr_pre_pre_folder = substr $srrid, 0, 3;
 	
 	# download sra file for specified srr ID with ascp
-	$cmd = "ascp -i $OPENSSH_KEY -k1 -Tr -l$BANDWIDTH anonftp\@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/$srr_pre_pre_folder/$srr_pre_folder/$srrid/$srrid.sra $outdir/$srrid";
+	$cmd = "ascp -i $OPENSSH_KEY -k1 -Tr -l$BANDWIDTH anonftp\@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/$srr_pre_pre_folder/$srr_pre_folder/$srrid/$srrid.sra $outdir";
 	
 	print "using aspera ascp client to download run $srrid\n";
 	print "EXECUTING: $cmd\n";
 	system($cmd);
 	
 	# unpack sra file with fastq-dump
-	$cmd = "fastq-dump -I --split-files --outdir $outdir/$srrid $outdir/$srrid/$srrid.sra";
+	$cmd = "fastq-dump -I --split-files --outdir $outdir $outdir/$srrid.sra";
 	print "EXECUTING: $cmd\n";
 	system($cmd);
 	
 	# remove sra file
-	system("rm $outdir/$srrid/$srrid.sra");
+	system("rm $outdir/$srrid.sra");
 }
 
 elsif ($method eq "ftp") {
 	
 	# download directly with fastq-dump (utilizes ftp protocol)
 	print  "\nFetching run: $srrid . . .\n";
-	$cmd = "fastq-dump -I --split-files --outdir $outdir/$srrid $srrid";
+	$cmd = "fastq-dump -I --split-files --outdir $outdir $srrid";
 	print "EXECUTING: $cmd\n";
 	system($cmd);
 	
@@ -62,7 +62,7 @@ else {
 
 	print "no download protocol specified. using ftp.\n";
 	print  "\nFetching run: $srrid . . .\n";
-        $cmd = "fastq-dump -I --split-files --outdir $outdir/$srrid $srrid";
+        $cmd = "fastq-dump -I --split-files --outdir $outdir $srrid";
         print "EXECUTING: $cmd\n";
         system($cmd);
 }
