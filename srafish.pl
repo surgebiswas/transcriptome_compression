@@ -170,7 +170,7 @@ while (<$query_results>) {
         # data is SE, it will only create a _1.fastq file.
 		# call slave script fishhook.pl to download and unpack sra files
 		
-		system("./fishhook.pl $run $out $download_protocol");
+		system("./fishhook.pl $run $out/$run $download_protocol");
 
         # Run sailfish.
         print  "Running sailfish  . . .\n";
