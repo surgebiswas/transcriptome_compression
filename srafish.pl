@@ -50,42 +50,46 @@ use Cwd;
 
 my $cwd = getcwd;
 
-my $MAGIC_INDEX_DIR 	= "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
+my $MAGIC_INDEX_DIR 	= "/nas02/home/s/b/sbiswas/bin/Sailfish-0.6.3-Linux_x86-64/indexes";
 my $NTHREADS 			= 6;
+my $EXECUTE             = 0;
+my $OPEN_SSH_KEY        = "/nas02/home/s/b/sbiswas/tradict/asperaweb_id_dsa.openssh";
 my $query;
 my $out 				= $cwd;
 my $query_table;
 my $help;
 my $download_protocol;
 
+
 GetOptions(
 	"query=s"			=> \$query,
 	"out=s"				=> \$out,
 	"table=s"			=> \$query_table,
-	"dlprotcl"			=> \$download_protocol,
+	"dlprotcl=s"			=> \$download_protocol,
 	"help"				=> \$help,
-
 );
 
 die <<USAGE
 
 USAGE: srafish.pl -q 'query' -o /path/to/out(optional)
 
-	-q		specify a query for Entrez search, e.g. '"Homo sapiens"[Organism] AND "strategy rna seq"[Properties]' to build a query table
-	OR
-	-t		use an already existing query table
+    -q  specify a query for Entrez search, e.g. '"Homo sapiens"[Organism] AND "strategy rna seq"[Properties]' to build a query table
+    OR
+    -t  use an already existing query table
 	
-	-o		path of your output directory
-	-d		download protocol to be used (-d aspera|ftp - default:aspera)
-	-h		print this help message
+    -o  path of your output directory
+    -d  download protocol to be used (-d aspera|ftp - default:aspera)
+    -s  Full path to open ssh key for ascp client
+    -h  print this help message
 	
 USAGE
 
 
 ## 0. Parameter checks.
 unless $query or $query_table;
-$out =~ s/\/$//g;
 $download_protocol = "aspera" unless $download_protocol;
+$out =~ s/\/$//g;
+
 
 
 ## 1. Prepare query table.
@@ -95,10 +99,11 @@ if ($query and $query_table) {
 
 
 my $queries = 0;
+my $query_count;
 if ($query_table) {
     # User provided a query table.
     
-	open my $query_count, "<$query_table" or die $!;
+	open $query_count, "<$query_table" or die $!;
 	<$query_count>;
 	$queries++ while <$query_count>;
 	close $query_count;
@@ -110,10 +115,10 @@ else {
     
 	$query_table = "$out/query_results.csv";
 	print  "\nBuilding Query table . . .\n\n";	
-	system("wget -O $query_table 'http://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?save=efetch&db=sra&rettype=runinfo&term=$query'");
+	system("wget -O $query_table 'http://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?save=efetch&db=sra&rettype=runinfo&term=$query'") if $EXECUTE;
 	
 	
-	open my $query_count, "<$query_table" or die $!;
+	open $query_count, "<$query_table" or die $!;
 	<$query_count>;
 	$queries++ while <$query_count>;
 	close $query_count;
@@ -126,7 +131,7 @@ else {
 
 
 
-## 2. Process (fastq-dump and sailfish) query results.
+## 2. Process (download, fastq-dump, and sailfish) query results.
 open my $query_results, "<$query_table" or die $!;
 
 <$query_results>; #skip header
@@ -140,6 +145,7 @@ my $cmd;
 my $failfish;
 my $exists;
 
+mkdir($out) unless -d $out;
 
 while (<$query_results>) {
 
@@ -154,8 +160,10 @@ while (<$query_results>) {
 	$library_name	= $line[11];
 	$layout			= $line[15];
 	
+    print "\n[$run]\n";
+    
 	# checkpoint 1: check if run is already processed
-	system("mkdir $out/$run");
+	system("mkdir $out/$run") if $EXECUTE;
 
 	$exists = &already_processed($run);
 	
@@ -170,7 +178,9 @@ while (<$query_results>) {
         # data is SE, it will only create a _1.fastq file.
 		# call slave script fishhook.pl to download and unpack sra files
 		
-		system("./fishhook.pl $run $out/$run $download_protocol");
+        $cmd = "./fishhook.pl $run $out/$run $download_protocol $OPEN_SSH_KEY";
+        print "EXECUTING: $cmd\n";
+		system($cmd) if $EXECUTE;
 
         # Run sailfish.
         print  "Running sailfish  . . .\n";
@@ -178,18 +188,18 @@ while (<$query_results>) {
             # Data is paired end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=PE:O=><:S=U' -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
-            system($cmd);
+            system($cmd) if $EXECUTE;
 	    
-	    	system("rm $out/$run/$run\_1.fastq");
-	    	system("rm $out/$run/$run\_2.fastq");
+	    	system("rm $out/$run/$run\_1.fastq") if $EXECUTE;
+	    	system("rm $out/$run/$run\_2.fastq") if $EXECUTE;
         }
         else {
             # Data is single end.
             $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=SE:S=U' -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
 	    	print "EXECUTING: $cmd\n";
-            system($cmd);
+            system($cmd) if $EXECUTE;
 	    
-	    	system("rm $out/$run/$run\_1.fastq");
+	    	system("rm $out/$run/$run\_1.fastq") if $EXECUTE;
         }
         
 		# checkpoint 2: parse sailfish log and match for keywords that will always
@@ -262,14 +272,21 @@ sub determine_genotype {
 	
 	my $final_genotype = "Col_0";
 	
-	for my $known_genotype (keys(%known_genotypes)) {
-		
-#		print $known_genotype, "\n";
-		if ($name =~ /$known_genotype[^a-z]/i){
-			$final_genotype = $known_genotypes{$known_genotype};
-			last;
-		}
-	}
+    # There are very few non Col-0 datasets. Even for non Col_0 accessions,
+    # the mapping rates are mid-70% and mapping these to Col_0 gets you a
+    # mapping rate of ~70%. Therefore, for the run on Killdevil we will map
+    # to Col_0 exclusively.
+    #
+    # Commenting out the following:
+    
+#	for my $known_genotype (keys(%known_genotypes)) {
+#		
+##		print $known_genotype, "\n";
+#		if ($name =~ /$known_genotype[^a-z]/i){
+#			$final_genotype = $known_genotypes{$known_genotype};
+#			last;
+#		}
+#	}
 
 	return $final_genotype;
 }
@@ -289,7 +306,7 @@ sub check_logfile {
 	if (-e "$outdir/$logdir/$run/logs/") {
 			
 		opendir LOG, "$outdir/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
-		my @files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
+		@files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
 		closedir LOG;
 		
 		for my $file_in_logdir (@files_in_logdir){

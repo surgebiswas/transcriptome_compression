@@ -18,22 +18,22 @@ use Data::Dumper;
 my $srrid		 = shift;
 my $outdir		 = shift;
 my $method		 = shift;
+my $openssh_key  = shift;
 my $BANDWIDTH	 = "400m";
 my $cmd;
 
+# Note $openssh_key must be a full/absolute path.
+
 $outdir =~ s/\/$//g;
-mkdir($outdir);
+mkdir($outdir) unless -d $outdir;
 	
 if ($method eq "aspera") {
-	
-	my $OPENSSH_KEY = "/home/konstantin/perl/tradict/asperaweb_id_dsa.openssh";
-#	my $OPENSSH_KEY = "/Users/wiggemacbook/Applications/Aspera\\ Connect.app/Contents/Resources/asperaweb_id_dsa.openssh";
-	
+		
 	my $srr_pre_folder = substr $srrid, 0, 6;
 	my $srr_pre_pre_folder = substr $srrid, 0, 3;
 	
 	# download sra file for specified srr ID with ascp
-	$cmd = "ascp -i $OPENSSH_KEY -k1 -Tr -l$BANDWIDTH anonftp\@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/$srr_pre_pre_folder/$srr_pre_folder/$srrid/$srrid.sra $outdir";
+	$cmd = "ascp -i $openssh_key -k1 -Tr -l$BANDWIDTH anonftp\@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/$srr_pre_pre_folder/$srr_pre_folder/$srrid/$srrid.sra $outdir";
 	
 	print "using aspera ascp client to download run $srrid\n";
 	print "EXECUTING: $cmd\n";
