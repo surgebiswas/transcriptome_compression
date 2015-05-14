@@ -37,6 +37,12 @@
 #
 #                    re-arranged data transfer. downloading .sra files will
 #                    now be managed by the slave script fishhook.pl.
+#
+# (14-05-15) v0.14 - fixed various bugs as descried on github.
+#                    added option -p. accepts a path to a file containing SRA
+#                    identifiers that have been processed in a previous run.
+#                    prior to processing a run, checks if this SRA identifier
+#                    is among this list. if yes, skips run.
 ###############################################################################
 
 
@@ -46,6 +52,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use Cwd;
+use File::Path;
 #use IPC::System::Simple qw(system);
 
 my $cwd = getcwd;
@@ -57,6 +64,7 @@ my $OPEN_SSH_KEY        = "/nas02/home/s/b/sbiswas/tradict/asperaweb_id_dsa.open
 my $query;
 my $out 				= $cwd;
 my $query_table;
+my $processed_list;
 my $help;
 my $download_protocol;
 
@@ -65,7 +73,8 @@ GetOptions(
 	"query=s"			=> \$query,
 	"out=s"				=> \$out,
 	"table=s"			=> \$query_table,
-	"dlprotcl=s"			=> \$download_protocol,
+	"processed=s"		=> \$processed_list,
+	"dlprotcl=s"		=> \$download_protocol,
 	"help"				=> \$help,
 );
 
@@ -78,6 +87,7 @@ USAGE: srafish.pl -q 'query' -o /path/to/out(optional)
     -t  use an already existing query table
 	
     -o  path of your output directory
+	-p	path to file that contains a list of SRA IDs that are already processed
     -d  download protocol to be used (-d aspera|ftp - default:aspera)
     -s  Full path to open ssh key for ascp client
     -h  print this help message
@@ -125,10 +135,18 @@ else {
 	print  "query table finished! $queries datasets identified\n";
 }
 
+my %processed;
 
-
-
-
+if ($processed_list) {
+	open my $processed_file, "<$processed_list" or die $!;
+	
+	while (<$processed_file>) {
+		
+		chomp;
+		$processed{$_} = 1;
+	}
+	close $processed_file;
+}
 
 
 ## 2. Process (download, fastq-dump, and sailfish) query results.
@@ -140,9 +158,10 @@ my $i = 1;
 my $run;
 my $library_name;
 my $layout;
+my $platform;
 my $genotype;
 my $cmd;
-my $failfish;
+my $run_complete;
 my $exists;
 
 mkdir($out) unless -d $out;
@@ -159,7 +178,19 @@ while (<$query_results>) {
 	$run			= $line[0];
 	$library_name	= $line[11];
 	$layout			= $line[15];
+	$platform		= $line[18];
 	
+	# as we can only process base space encoded files, skip the ones that were sequenced with ABI SOLiD
+	unless ($platform eq "ILLUMINA") {
+		$i++;
+		next;
+	}
+	
+	if (exists($processed{$run})) {
+		$i++;
+		next;
+	}
+
     print "\n[$run]\n";
     
 	# checkpoint 1: check if run is already processed
@@ -178,7 +209,7 @@ while (<$query_results>) {
         # data is SE, it will only create a _1.fastq file.
 		# call slave script fishhook.pl to download and unpack sra files
 		
-        $cmd = "./fishhook.pl $run $out/$run $download_protocol $OPEN_SSH_KEY";
+        $cmd = "fishhook.pl $run $out/$run $download_protocol $OPEN_SSH_KEY";
         print "EXECUTING: $cmd\n";
 		system($cmd) if $EXECUTE;
 
@@ -192,6 +223,8 @@ while (<$query_results>) {
 	    
 	    	system("rm $out/$run/$run\_1.fastq") if $EXECUTE;
 	    	system("rm $out/$run/$run\_2.fastq") if $EXECUTE;
+			# reads.sfc is a reasonably large file produced by sailfish, which we don't need for downstream analysis
+			system("rm $out/$run/reads.sfc") if $EXECUTE;
         }
         else {
             # Data is single end.
@@ -202,12 +235,11 @@ while (<$query_results>) {
 	    	system("rm $out/$run/$run\_1.fastq") if $EXECUTE;
         }
         
-		# checkpoint 2: parse sailfish log and match for keywords that will always
-		# appear in the last line of a logfile from a successful sailfish
-		$failfish = &check_logfile($out, $run);
+		# checkpoint 2: check if the file "quant_bias_corrected.sf" exists and if it is bigger than 500KB
+		$run_complete = &completion_check($out, $run);
 		
-		if ($failfish) {
-			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
+		if ($run_complete == 0) {
+			print "run $run completed unsuccessfully.\n";
 			print "proceeding anyway. ", ($i / $queries) * 100, " % done.\n";
 
 		}
@@ -228,15 +260,21 @@ sub already_processed {
 	my $rundir = shift @_;
 	my @files_in_rundir;
 	
-	opendir DIR, "$out/$run/" or print "cannot open directory $out/$rundir\n";
-	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir DIR;
-	closedir DIR;
-	
-	for my $file_in_rundir (@files_in_rundir) {
+	if (-d "$out/$run/") {
 		
-		if ($file_in_rundir =~ /quant.sf/) {
-			$processed = 1;
-			last;
+		opendir DIR, "$out/$run/" or print "cannot open directory $out/$rundir\n";
+		@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir DIR;
+		closedir DIR;
+		
+		for my $file_in_rundir (@files_in_rundir) {
+			
+			if ($file_in_rundir =~ /quant_bias_corrected.sf/) {
+				$processed = 1;
+			}
+		}
+		if ($processed == 0) {
+			print "Run $run exists, but did not finish sucessfully. resetting run and retrying . . .\n";
+			remove_tree( "$out/$run/", {save => 1} ) if $EXECUTE;
 		}
 	}
 	return $processed;
@@ -295,35 +333,20 @@ sub determine_genotype {
 
 ###############################################################################
 
-sub check_logfile {
+sub completion_check {
 	
-	my $logfile_status	 = 1;
+	my $complete	 = 0;
 	my $outdir		 = shift @_;
-	my $logdir		 = shift @_;
-	my @files_in_logdir;
-	my $logfilename;
+	my $rundir		 = shift @_;
+	my $filesize;
 	
-	if (-e "$outdir/$logdir/$run/logs/") {
+	if (-e "$outdir/$rundir/quant_bias_corrected.sf") {
 			
-		opendir LOG, "$outdir/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
-		@files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
-		closedir LOG;
-		
-		for my $file_in_logdir (@files_in_logdir){
-			if ($file_in_logdir =~ /sailfish\.g2log.+\.log/) {
-				$logfilename = $file_in_logdir;
-				last;
-			} 
-		}
-		
-		open my $logfile, "<$outdir/$logdir/logs/$logfilename" or print "cannot find logfile for run $run!\n";
-		
-		while (<$logfile>){
-			$logfile_status = 0 if /g2log\ file\ shutdown/i;
-		}
-		close $logfile;
+		$filesize = -s "$outdir/$rundir/quant_bias_corrected.sf";
+		print $filesize, "\n";
+		$complete = 1 if $filesize >= 500000;
 	}
-	return $logfile_status;
+	return $complete;
 }
 
 ###############################################################################
