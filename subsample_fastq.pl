@@ -8,11 +8,16 @@ use Data::Dumper;
 use Cwd;
 use File::Path;
 
-my $VERBOSE = 1;
 
-my $freq = shift; # Frequency of subsampling. e.g. $freq = 4 samples every fourth read (required).
+
+# Assumes each sequence only takes 1 line in the fastq file.
+my $freq = shift; # Proportion to downsample to. A number between 0 and 1. (required)
 my $r1 = shift; # Read file, or file for read 1 if paired end.   (required)
 my $r2 = shift; # File for read 2 if paired end.
+my $seed = shift;
+
+# Set the random number seed.
+srand($seed) if $seed;
 
 my $isPE = $r2;
 
@@ -26,6 +31,7 @@ if ($isPE) {
     
     my (@r1l, @r2l, $i);
     my $itr = 1;
+    my $u;
     while (<R1>){
         $r1l[0] = $_;
         $r2l[0] = <R2>;
@@ -39,8 +45,8 @@ if ($isPE) {
         $r1l[3] = <R1>;
         $r2l[3] = <R2>;
         
-        
-        if (($itr % $freq) == 0){
+        $u = rand();
+        if ($u < $freq) {
             for ($i = 0; $i <= 3; $i++){
                 print R1O $r1l[$i];
                 print R2O $r2l[$i];
@@ -63,6 +69,7 @@ if ($isPE) {
     
     my (@r1l, $i);
     my $itr = 1;
+    my $u;
     while (<R1>){
         $r1l[0] = $_;
         
@@ -72,8 +79,8 @@ if ($isPE) {
         
         $r1l[3] = <R1>;
         
-        
-        if (($itr % $freq) == 0){
+        $u = rand();
+        if ($u < $freq) {
             for ($i = 0; $i <= 3; $i++){
                 print R1O $r1l[$i];
             }
