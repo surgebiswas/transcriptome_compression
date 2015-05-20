@@ -198,6 +198,7 @@ sub query_details{
     my @line = split(/,/, $query_table_line);
     
     my $run = $line[0];
+    my $nreads = $line[3];
     my $library_name = $line[11];
     my $layout = $line[15];
     my $platform = $line[18];
