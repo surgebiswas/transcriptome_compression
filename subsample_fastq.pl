@@ -14,7 +14,7 @@ use File::Path;
 my $freq = shift; # Proportion to downsample to. A number between 0 and 1. (required)
 my $r1 = shift; # Read file, or file for read 1 if paired end.   (required)
 my $r2 = shift; # File for read 2 if paired end.
-my $seed = shift;
+my $seed = shift; # Random number seed.
 
 # Set the random number seed.
 srand($seed) if $seed;
