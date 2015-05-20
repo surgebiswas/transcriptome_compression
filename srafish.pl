@@ -155,13 +155,13 @@ sub sub_sample {
 		execute_cmd("subsample_fastq.pl $freq $out/$run/$run\_1.fastq $out/$run/$run\_2.fastq", $EXECUTE);
 		
 		# Rename the subsampled files back to the original names.
-		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq; mv $out/$run/$run\_2.fastq.sub $out/$run/$run\_2.fastq;")
+		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq; mv $out/$run/$run\_2.fastq.sub $out/$run/$run\_2.fastq;", $EXECUTE)
 	} else {
 		# Data is single end
 		execute_cmd("subsample_fastq.pl $freq $out/$run/$run\_1.fastq", $EXECUTE);
 		
 		# Rename the subsampled file back to the original name.
-		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq");
+		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq", $EXECUTE);
 	}
 }
 sub read_do_not_process_list {
