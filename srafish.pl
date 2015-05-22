@@ -3,310 +3,288 @@
 # srafish.pl - v0.13
 # by Surge Biswas, Konstantin Kerner
 
-######### UPDATE HISTORY ######################################################
-# (20-04-15) v0.11 - added option to use an already existing query table.
-#
-#                    added subroutine to identify reference genotypes. if the
-#                    keywords for one of the 19 MAGIC parents (e.g. "edi", case
-#                    insensitive) is identified in column "library name", the
-#                    respective reference matrix will be used. if no genotype
-#                    can be identified, col reference will be used.
-#
-# (21-04-15) v0.12 - Added comments to code.
-#
-#                    Changed $experiment variable to
-#                    $run because 'experiments' are SRX... and can be shared
-#                    across samples. 'Runs' however are unique SRR or ERR IDs.
-#
-#                    Changed chdir calls from $cwd/$out to simply $out. I did
-#                    this because if out is a relative path, it will be created
-#                    as such (no need to specify the working directory). If
-#                    its a full path, then having $cwd/$out doesn't make sense.
-#
-#                    Kept --split-files on for all fastq-dump calls.
-#
-#		             Added Sailfish call
-#                
-#                    added checkpoint for successful sailfish execution based
-#                    on the composition of the sailfish logfile.
-#
-# (22-04-15) v0.13 - changed checkpoint 1: "check if run is already processed"
-#                    into a subroutine.
-#
-#                    added checkpoint 2: "parse sailfish log".
-#
-#                    re-arranged data transfer. downloading .sra files will
-#                    now be managed by the slave script fishhook.pl.
-###############################################################################
-
-
-
 use strict;
 use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use Cwd;
-#use IPC::System::Simple qw(system);
+use File::Path;
 
-my $cwd = getcwd;
+# Constants
+my $EXECUTE = 0;
 
-my $MAGIC_INDEX_DIR 	= "/home/surge/applications/Sailfish-0.6.3-Linux_x86-64/indexes/magic";
-my $NTHREADS 			= 6;
-my $query;
-my $out 				= $cwd;
+my $out = getcwd;
 my $query_table;
+my $do_not_process_list;
 my $help;
 my $download_protocol;
+my $index;
+my $ssh_key;
+my $nthreads;
+my $min_num_reads;
+my $max_num_reads;
+
 
 GetOptions(
-	"query=s"			=> \$query,
-	"out=s"				=> \$out,
-	"table=s"			=> \$query_table,
-	"dlprotcl"			=> \$download_protocol,
-	"help"				=> \$help,
-
+	"out=s"	=> \$out,
+	"table=s" => \$query_table,
+	"index=s" => \$index,
+	"ssh_key=s" => \$ssh_key,
+	"nthreads=s" => \$nthreads,
+	"do_not_process=s" => \$do_not_process_list,
+	"protcl=s" => \$download_protocol,
+	"min_num_reads=s" => \$min_num_reads,
+	"a_max_num_reads=s" => \$max_num_reads,
+	"help" => \$help,
 );
 
 die <<USAGE
 
-USAGE: srafish.pl -q 'query' -o /path/to/out(optional)
-
-	-q		specify a query for Entrez search, e.g. '"Homo sapiens"[Organism] AND "strategy rna seq"[Properties]' to build a query table
-	OR
-	-t		use an already existing query table
-	
-	-o		path of your output directory
-	-d		download protocol to be used (-d aspera|ftp - default:aspera)
-	-h		print this help message
+USAGE: srafish.pl 
+	-t  Path to a query table (required)
+	-i  Sailfish index path (required)
+	-s  SSH key for aspera (required)
+	-n  Number of threads to use when running Sailfish (default: 6)
+	-o  Path to output directory (default: working directory)
+	-d  Path to file that contains a list of SRA IDs that are NOT to be processed (optional)
+	-p  Download protocol to be used (-d aspera|ftp - default:aspera)
+	-m  Minimum number of reads/pairs a sample should have in order to be processed (default: 4e6)
+	-a  Maximum number of reads/pairs a sample should have. Larger ones will be downsampled (default: 40e6)
+	-h  Print this help message
 	
 USAGE
+if $help;
 
 
-## 0. Parameter checks.
-unless $query or $query_table;
-$out =~ s/\/$//g;
+## 0. Parameter checks and echo.
+my $errmessage = "";
+$errmessage = $errmessage . "Path to query table required.\n" unless $query_table;
+$errmessage = $errmessage . "Sailfish index path required.\n" unless $index;
+$errmessage = $errmessage . "SSH key for aspera required.\n" unless $ssh_key or $download_protocol ne "aspera";
+die $errmessage if $errmessage;
+
+$nthreads = 6 unless $nthreads;
 $download_protocol = "aspera" unless $download_protocol;
+$ssh_key = "NA" if $download_protocol ne "aspera";
+$min_num_reads = 4000000 unless $min_num_reads;
+$max_num_reads = 40000000 unless $max_num_reads;
+$out =~ s/\/$//g;
 
+print "Query table:             $query_table\n";
+print "Output directory:        $out\n";
+print "Sailfish index:          $index\n";
+print "SSH Key:                 $ssh_key\n";
+print "Do not process list:     $do_not_process_list\n" if $do_not_process_list;
+print "Do not process list:     not provided\n" unless $do_not_process_list;
+print "Download protocol:       $download_protocol\n";
+print "Min. num. reads:         $min_num_reads\n";
+print "Max. num. reads:         $max_num_reads\n";
+
+
+
+## BEGIN MAIN CODE BODY ##
 
 ## 1. Prepare query table.
-if ($query and $query_table) {
-	die "query AND table specified. please choose only one of these two options.";
-}
-
-
-my $queries = 0;
-if ($query_table) {
-    # User provided a query table.
-    
-	open my $query_count, "<$query_table" or die $!;
-	<$query_count>;
-	$queries++ while <$query_count>;
-	close $query_count;
-	print  "\nquery table found at $query_table! $queries queries identified\n";
-}
-
-else {
-    # User provided a query that we need to build a table from.
-    
-	$query_table = "$out/query_results.csv";
-	print  "\nBuilding Query table . . .\n\n";	
-	system("wget -O $query_table 'http://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?save=efetch&db=sra&rettype=runinfo&term=$query'");
+my $num_queries = 0;
+open QT, "<$query_table" or die $!; <QT>; $num_queries++ while <QT>; close QT;
+print  "\nQuery table found at $query_table! $num_queries queries identified\n";
 	
-	
-	open my $query_count, "<$query_table" or die $!;
-	<$query_count>;
-	$queries++ while <$query_count>;
-	close $query_count;
-	print  "query table finished! $queries datasets identified\n";
-}
+## 2. Read in the 'do not process' list.
+my $do_not_process = read_do_not_process_list($do_not_process_list);
 
-
-
-
-
-
-
-## 2. Process (fastq-dump and sailfish) query results.
-open my $query_results, "<$query_table" or die $!;
-
-<$query_results>; #skip header
-
+## 3. Download, fastq-dump, and Sailfish query results.
 my $i = 1;
-my $run;
-my $library_name;
-my $layout;
-my $genotype;
-my $cmd;
-my $failfish;
-my $exists;
+my ($run, $qdetails);
+execute_cmd("mkdir $out", $EXECUTE) unless -d $out;
 
-
+open my $query_results, "$query_table" or die $!; <$query_results>; #skip header
 while (<$query_results>) {
-
-	chomp;
 	
-    # replace dates within quotes with empty string. These interfere with comma parsing.
-    $_ =~ s/\".+?\"//g;
-
-	my @line = split(/,/, $_);
-
-	$run			= $line[0];
-	$library_name	= $line[11];
-	$layout			= $line[15];
+	$qdetails = query_details($_, $do_not_process, $min_num_reads, $out, 1);
+	$run = $qdetails -> {run_id};
 	
-	# checkpoint 1: check if run is already processed
-	system("mkdir $out/$run");
-
-	$exists = &already_processed($run);
-	
-	if ($exists){
-		print "run $run already processed! proceeding to next run . . .\n";
+	if ($qdetails -> {should_process}){
+		        
+		# Download and unpack the data.
+		run_fishhook($out, $run, $download_protocol, $ssh_key, $EXECUTE);
+		
+		# Subsample reads if the file is too large.
+		sub_sample($out, $run, $qdetails, $max_num_reads, $EXECUTE) if $qdetails -> {nreads} > $max_num_reads;
+		
+		# Run sailfish to quantify transcript abundances.
+		run_sailfish($out, $run, $index, $nthreads, $EXECUTE);
+        		
+		if (processed_to_completion($out, $run)) {
+			print "Run $run finished successfully!\n";
+		} else {
+			print "WARNING: Run $run was unsuccessful. Moving on ...\n";
+		}
+		
+	} else {
+		print "Not processing $run.\n";
 	}
 	
-	else {
-		$genotype = &determine_genotype ($library_name);
-		
-        # Get the data as a FASTQ. Always have --split-files on. In the case the
-        # data is SE, it will only create a _1.fastq file.
-		# call slave script fishhook.pl to download and unpack sra files
-		
-		system("./fishhook.pl $run $out $download_protocol");
-
-        # Run sailfish.
-        print  "Running sailfish  . . .\n";
-        if (-e "$out/$run/$run\_2.fastq") {
-            # Data is paired end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=PE:O=><:S=U' -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $NTHREADS";
-	    	print "EXECUTING: $cmd\n";
-            system($cmd);
-	    
-	    	system("rm $out/$run/$run\_1.fastq");
-	    	system("rm $out/$run/$run\_2.fastq");
-        }
-        else {
-            # Data is single end.
-            $cmd = "sailfish quant -i $MAGIC_INDEX_DIR/$genotype/ -l 'T=SE:S=U' -r $out/$run/$run\_1.fastq -o $out/$run -p $NTHREADS";
-	    	print "EXECUTING: $cmd\n";
-            system($cmd);
-	    
-	    	system("rm $out/$run/$run\_1.fastq");
-        }
-        
-		# checkpoint 2: parse sailfish log and match for keywords that will always
-		# appear in the last line of a logfile from a successful sailfish
-		$failfish = &check_logfile($out, $run);
-		
-		if ($failfish) {
-			print "odd looking logfile for run $run. check sailfish logfile at $out/$run/logs.\n";
-			print "proceeding anyway. ", ($i / $queries) * 100, " % done.\n";
-
-		}
-		else {
-			print  "Run $run finished successfully! ", ($i / $queries) * 100, " % done.\n";
-		}
-		$i++;
-	}
+	print "$i of $num_queries records completed\n";
+	$i++;
 }
 
+## END MAIN CODE BODY ##
 
-###############################################################################
-###############################################################################
 
-sub already_processed {
+
+################################ SUBROUTINES ##################################
+sub execute_cmd {
+	my $cmd = shift;
+	my $exec = shift;
 	
-	my $processed = 0;
-	my $rundir = shift @_;
-	my @files_in_rundir;
-	
-	opendir DIR, "$out/$run/" or print "cannot open directory $out/$rundir\n";
-	@files_in_rundir = grep { $_ ne '.' && $_ ne '..' } readdir DIR;
-	closedir DIR;
-	
-	for my $file_in_rundir (@files_in_rundir) {
-		
-		if ($file_in_rundir =~ /quant.sf/) {
-			$processed = 1;
-			last;
-		}
-	}
-	return $processed;
+	print "EXECUTING: $cmd\n";
+	system($cmd) if $exec;
 }
 
-
-###############################################################################
-
-sub determine_genotype {
+sub sub_sample {
+	my $out = shift;
+	my $run = shift;
+	my $qd = shift;
+	my $maxn = shift;
+	my $EXECUTE = shift;
 	
-	my $name = shift @_;
+	my $freq = $maxn / $qd->{nreads};
 
-	my %known_genotypes = (
-		"bur"	=> "Bur_0",
-		"can"	=> "Can_0",
-		"ct"	=> "Ct_1",
-		"edi"	=> "Edi_0",
-		"hi"	=> "Hi_0",
-		"kn"	=> "Kn_0",
-		"ler"	=> "Ler_0",
-		"mt"	=> "Mt_0",
-		"no"	=> "No_0",
-		"oy"	=> "Oy_0",
-		"po"	=> "Po_0",
-		"rsch"	=> "Rsch_4",
-		"sf"	=> "Sf_2",
-		"tsu"	=> "Tsu_0",
-		"wil"	=> "Wil_2",
-		"ws"	=> "Ws_0",
-		"wu"	=> "Wu_0",
-		"zu"	=> "Zu_0",
-	);
-	
-	my $final_genotype = "Col_0";
-	
-	for my $known_genotype (keys(%known_genotypes)) {
+	if (-e "$out/$run/$run\_2.fastq") {
+		# Data is paired end
+		execute_cmd("subsample_fastq.pl $freq $out/$run/$run\_1.fastq $out/$run/$run\_2.fastq", $EXECUTE);
 		
-#		print $known_genotype, "\n";
-		if ($name =~ /$known_genotype[^a-z]/i){
-			$final_genotype = $known_genotypes{$known_genotype};
-			last;
-		}
+		# Rename the subsampled files back to the original names.
+		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq; mv $out/$run/$run\_2.fastq.sub $out/$run/$run\_2.fastq;", $EXECUTE)
+	} else {
+		# Data is single end
+		execute_cmd("subsample_fastq.pl $freq $out/$run/$run\_1.fastq", $EXECUTE);
+		
+		# Rename the subsampled file back to the original name.
+		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq", $EXECUTE);
 	}
-
-	return $final_genotype;
 }
-
-
-
-###############################################################################
-
-sub check_logfile {
-	
-	my $logfile_status	 = 1;
-	my $outdir		 = shift @_;
-	my $logdir		 = shift @_;
-	my @files_in_logdir;
-	my $logfilename;
-	
-	if (-e "$outdir/$logdir/$run/logs/") {
+sub read_do_not_process_list {
+	my $dnpl = shift;
+	my %do_not_process;
+	if ($dnpl) {
+		open PF, "$dnpl" or die $!;
+		
+		while (<PF>) {
 			
-		opendir LOG, "$outdir/$logdir/logs/" or print "cannot open directory $out/$logdir/logs/\n";
-		my @files_in_logdir = grep { $_ ne '.' && $_ ne '..' } readdir LOG;
-		closedir LOG;
-		
-		for my $file_in_logdir (@files_in_logdir){
-			if ($file_in_logdir =~ /sailfish\.g2log.+\.log/) {
-				$logfilename = $file_in_logdir;
-				last;
-			} 
+			chomp;
+			$do_not_process{$_} = 1;
 		}
-		
-		open my $logfile, "<$outdir/$logdir/logs/$logfilename" or print "cannot find logfile for run $run!\n";
-		
-		while (<$logfile>){
-			$logfile_status = 0 if /g2log\ file\ shutdown/i;
-		}
-		close $logfile;
+		close PF;
 	}
-	return $logfile_status;
+	return \%do_not_process;
+}
+
+sub run_fishhook {
+	my $out = shift;
+	my $run = shift;
+	my $download_protocol = shift;
+	my $ssh_key = shift;
+	my $EXECUTE = shift;
+	my $cmd;
+	
+	execute_cmd("mkdir $out/$run", $EXECUTE) unless -d "$out/$run";
+	
+	# Call fishhook.pl to download and unpack sra files
+	execute_cmd("fishhook.pl $run $out/$run $download_protocol $ssh_key", $EXECUTE);
+}
+
+sub run_sailfish {
+	my $out = shift;
+	my $run = shift;
+	my $index = shift;
+	my $nt = shift;
+	my $EXECUTE = shift;
+	
+	my $cmd;
+	if (-e "$out/$run/$run\_2.fastq") {
+		# Data is paired end.
+		execute_cmd("sailfish quant -i $index -l 'T=PE:O=><:S=U' -1 $out/$run/$run\_1.fastq -2 $out/$run/$run\_2.fastq -o $out/$run -p $nt &> $out/$run/sf.out", $EXECUTE);
+		execute_cmd("rm $out/$run/$run\_1.fastq; rm $out/$run/$run\_2.fastq; rm $out/$run/sf.out", $EXECUTE);
+	}
+	else {
+		# Data is single end.
+		execute_cmd("sailfish quant -i $index -l 'T=SE:S=U' -r $out/$run/$run\_1.fastq -o $out/$run -p $nt &> $out/$run/sf.out", $EXECUTE);
+		execute_cmd("rm $out/$run/$run\_1.fastq; rm $out/$run/sf.out", $EXECUTE);
+	}
+	
+	# reads.sfc is a reasonably large file produced by sailfish, which we don't need for downstream analysis
+	execute_cmd("rm $out/$run/reads.sfc", $EXECUTE);
+}
+
+sub query_details{
+    my $query_table_line = shift;
+    my $do_not_process = shift;
+    my $min_reads = shift;
+    my $out = shift;
+    my $print_details = shift;
+    my $platformOK = 0;
+    my $dnp = 0;
+    my $ap = 0;
+    
+    chomp($query_table_line);
+    
+    # replace dates within quotes with empty string. These interfere with comma parsing.
+    $query_table_line =~ s/\".+?\"//g;
+    
+    my @line = split(/,/, $query_table_line);
+    
+    my $run = $line[0];
+    my $nreads = $line[3];
+    my $library_name = $line[11];
+    my $layout = $line[15];
+    my $platform = $line[18];
+    
+    # Make sure its an Illumina run.
+    $platformOK = 1 if lc $platform eq lc "ILLUMINA";
+        
+    # Check if this run is in the "do not process" list.
+    $dnp = 1 if exists($do_not_process -> {$run});
+    
+    # Check if this run already has been processed.
+    $ap = processed_to_completion($out, $run);
+        
+    
+    my %query_details;
+    $query_details{run_id} = $run;
+    $query_details{platformOK} = $platformOK;
+    $query_details{do_not_process} = $dnp;
+    $query_details{already_processed} = $ap;
+    $query_details{nreads} = $nreads;
+    $query_details{should_process} = $platformOK & !$ap & !$dnp & ($nreads >= $min_reads);
+    
+    if ($print_details) {
+	print "\n[$run]\n";
+	print "Platform: $platform\n";
+	print "Num. reads: $nreads\n";
+	print "Listed as do not process? YES\n" if $dnp;
+	print "Listed as do not process? NO\n" unless $dnp;
+	print "Already processed? YES\n" if $ap;
+	print "Already processed? NO\n" unless $ap;
+	print "Insufficient reads? NO\n" if $nreads >= $min_reads;
+	print "Insufficient reads? YES\n" unless $nreads >= $min_reads;
+	print "Should process? YES\n" if $query_details{should_process};
+	print "Should process? NO\n" unless $query_details{should_process};
+    }
+	
+    return \%query_details;
+}
+
+
+sub processed_to_completion {
+	my $complete = 0;
+	my $outdir = shift;
+	my $rundir = shift;
+	
+	if (-e "$outdir/$rundir/quant_bias_corrected.sf") {
+		$complete = 1 if -s "$outdir/$rundir/quant_bias_corrected.sf" >= 500000;
+	}
+	return $complete;
 }
 
 ###############################################################################
