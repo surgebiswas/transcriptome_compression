@@ -120,6 +120,8 @@ while (<$query_results>) {
 			print "WARNING: Run $run was unsuccessful. Moving on ...\n";
 		}
 		
+		# Remove the first 5 (header) lines from quant_bias_corrected.sf to make it easier to parse this file downstream
+		remove_header_lines_from_file("$out/$run/quant_bias_corrected.sf", 5, $EXECUTE);		
 	} else {
 		print "Not processing $run.\n";
 	}
@@ -287,4 +289,25 @@ sub processed_to_completion {
 	return $complete;
 }
 
+sub remove_header_lines_from_file {
+	
+	my $file = shift; # file you want to change (full path)
+	my $remlines = shift; # number of lines you want to remove from the beginning of the file
+	my $EXECUTE = shift;
+
+	open my $cf, "<$file" or die $!;
+	open my $tmp, ">$file.tmp" or die $!;
+	
+	<$cf> for (1..$remlines); # skip the number of lines you want to remove
+	
+	while (<$cf>) {
+		print $tmp "$_";
+	}
+	
+	close $cf;
+	close $tmp;
+
+	execute_cmd("rm $file", $EXECUTE);
+	execute_cmd("mv $file.tmp $file", $EXECUTE);
+}
 ###############################################################################
