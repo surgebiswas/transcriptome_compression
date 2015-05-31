@@ -15,3 +15,7 @@ Transcriptome prediction
 4. Add the line `export PATH=/path/to/tradict:$PATH` to your .bashrc profile, where `/path/to/tradict` is the path that was copied into the memory buffer in step 2.
 5. Save and exit with Ctrl+x.
 6. Type `source ~/.bashrc` as linux user or `source /etc/profile` as mac user to load the modified profile.
+
+# Misc. notes
+1. If getting the error: "name not found while resolving tree within virtual file system module" Try updating sra-toolkit to latest release.
+
