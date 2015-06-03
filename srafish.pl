@@ -115,13 +115,16 @@ while (<$query_results>) {
 		run_sailfish($out, $run, $index, $nthreads, $EXECUTE);
         		
 		if (processed_to_completion($out, $run)) {
+            # Remove the first 6 (header) lines from quant_bias_corrected.sf to
+            # make it easier to parse this file downstream
+            remove_header_lines_from_file("$out/$run/quant_bias_corrected.sf", 6, $EXECUTE);
+            
 			print "Run $run finished successfully!\n";
 		} else {
 			print "WARNING: Run $run was unsuccessful. Moving on ...\n";
 		}
 		
-		# Remove the first 5 (header) lines from quant_bias_corrected.sf to make it easier to parse this file downstream
-		remove_header_lines_from_file("$out/$run/quant_bias_corrected.sf", 5, $EXECUTE);		
+				
 	} else {
 		print "Not processing $run.\n";
 	}
@@ -166,6 +169,7 @@ sub sub_sample {
 		execute_cmd("mv $out/$run/$run\_1.fastq.sub $out/$run/$run\_1.fastq", $EXECUTE);
 	}
 }
+
 sub read_do_not_process_list {
 	my $dnpl = shift;
 	my %do_not_process;
@@ -277,7 +281,6 @@ sub query_details{
     return \%query_details;
 }
 
-
 sub processed_to_completion {
 	my $complete = 0;
 	my $outdir = shift;
@@ -295,19 +298,8 @@ sub remove_header_lines_from_file {
 	my $remlines = shift; # number of lines you want to remove from the beginning of the file
 	my $EXECUTE = shift;
 
-	open my $cf, "<$file" or die $!;
-	open my $tmp, ">$file.tmp" or die $!;
-	
-	<$cf> for (1..$remlines); # skip the number of lines you want to remove
-	
-	while (<$cf>) {
-		print $tmp "$_";
-	}
-	
-	close $cf;
-	close $tmp;
-
-	execute_cmd("rm $file", $EXECUTE);
-	execute_cmd("mv $file.tmp $file", $EXECUTE);
+    execute_cmd("tail -n +$remlines $file > $file.tmp", $EXECUTE);
+    execute_cmd("rm $file", $EXECUTE);
+    execute_cmd("mv $file.tmp $file", $EXECUTE);
 }
 ###############################################################################
