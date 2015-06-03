@@ -11,7 +11,7 @@ use Cwd;
 use File::Path;
 
 # Constants
-my $EXECUTE = 0;
+my $EXECUTE = 1;
 
 my $out = getcwd;
 my $query_table;
