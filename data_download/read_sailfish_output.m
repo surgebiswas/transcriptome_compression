@@ -1,11 +1,13 @@
 function [ s ] = read_sailfish_output( sf_file, varargin )
 
-% If quickread is true, the TPM column is cut out, and then read in with
+% If quickread is true, the TPM and EstNumReads column is cut out, and then read in with
 % matlab's 'load'.
-% Note that s.table will not be a dataset but rather just a vector of TPM
-% values.
+% Note that s.table will not be a dataset but rather just a matrix. The
+% first column will be the TPM values and the second column will be the
+% estimated number of reads.
 quickread = setParam(varargin, 'quickread', false); 
 TPMCOL = 3;
+ENRCOL = 7;
 
 fid = fopen(sf_file);
 l = fgetl(fid);
@@ -32,7 +34,7 @@ else
 end
 
 if quickread
-    system(sprintf('cut -f %0.0f %s > tmp.txt', TPMCOL, sf_file));
+    system(sprintf('cut -f %0.0f,%0.0f %s > tmp.txt', TPMCOL, ENRCOL, sf_file));
     s.table = load('tmp.txt');
 else
     d = dataset('file', fname, 'ReadVarNames', false, 'ReadObsNames', true);
@@ -46,4 +48,5 @@ end
 
 
 end
+
 

@@ -21,13 +21,15 @@ for i = 1 : length(sra_ids)
         q = read_sailfish_output('quant_bias_corrected.sf', 'quickread', false);
         
         s.tpm = [q.table.TPM, zeros(length(q.table.TPM),length(sra_ids)-1)];
+        s.estNumReads = [q.table.EstimatedNumReads, zeros(length(q.table.TPM),length(sra_ids)-1)];
         s.transcript_id = get(q.table, 'ObsNames');
     else
         % In all subsequnt passes just read the TPM column.
         % Read quickly if user requests.
         q = read_sailfish_output('quant_bias_corrected.sf', 'quickread', quickread);
         
-        s.tpm(:,i) = q.table;
+        s.tpm(:,i) = q.table(:,1);
+        s.estNumReads(:,i) = q.table(:,2);
     end
   
     rci = dataset('file', 'reads.count_info', 'ReadObsNames', true, 'ReadVarNames', false);
