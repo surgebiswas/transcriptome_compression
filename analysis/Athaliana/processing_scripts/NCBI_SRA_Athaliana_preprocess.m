@@ -3,11 +3,11 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
     sf = get_standard_figure_font_sizes;
 
     % Read the query table.
-    if false
-        qt = read_ncbi_sra_query_table('Athaliana_query_table_18May2015_shuffled_.csv');
-        save('Athaliana_query_table_18May2015_DO_NOT_USE.mat', 'qt')
+    if true
+        qt = read_ncbi_sra_query_table(queryTable);
+        save([queryTable, '_TEMP_DO_NOT_USE.mat'], 'qt')
     else
-        load('Athaliana_query_table_18May2015_DO_NOT_USE.mat');
+        load([queryTable, '_TEMP_DO_NOT_USE.mat']);
     end
     
     % Read TPM data
@@ -53,7 +53,7 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
     end
 
     % Build the gene count dataset.
-    Yd = collapse_isoform_table(mat2dataset(Y, 'ObsNames', tids, 'VarNames', sids));
+    Yd = collapse_Athaliana_isoform_table(mat2dataset(Y, 'ObsNames', tids, 'VarNames', sids));
 
     % Keep only nuclear protein coding
     dk = dataset('file','/Users/sbiswas/Documents/matlab/src/interactome/At_nuclear_protein_coding.txt', 'ReadObsNames', false, 'ReadVarNames', false);

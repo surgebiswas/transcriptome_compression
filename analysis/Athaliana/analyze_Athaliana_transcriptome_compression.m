@@ -1,10 +1,11 @@
 clear;
 rng('default');
 
-cd(matdir)
-startup
-
-cd(matdir('tradict/NCBI_SRA/Athaliana/'));
+% Initialize environment
+repo = 'transcriptome_compression/';
+datadir = ['~/GitHub/data/', repo, 'Athaliana/'];
+path(genpath(['~/GitHub/', repo]), path);
+cd(datadir);
 
 %mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed.mat';
 mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed_updated_09June2015.mat';
@@ -15,7 +16,7 @@ queryTable = 'Athaliana_query_table_18May2015_shuffled_.csv';
 % Isoform collapsing to genes
 % Keeping of nuclear protein coding genes.
 % Check TPM profiles
-if true; NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); return; end
+if false; NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); return; end
 
 load(mainDataFile);
 lY = log10(Y' + 0.1);
@@ -28,7 +29,7 @@ if false; NCBI_SRA_Athaliana_plot_clock_genes(lY, tids); end
 if false; logcov = NCBI_SRA_Athalianal_COV_density_plot(Y); end
 
 % Perc. variation explained vs eigengene.
-if true; [coef, pexp] = NCBI_SRA_Athaliana_pexp_vs_components(lY); end
+if false; [coef, pexp] = NCBI_SRA_Athaliana_pexp_vs_components(lY); end
 
 % PCA plots
 if false
@@ -44,7 +45,7 @@ end
 
 % Marker OMP decomposition
 % Run on $pw
-if false
+if true
     somp = marker_OMP(standardize(lY), 0.25, 'savememory', true, 'maxfeatures', 100);
     save('NCBI_SRA_Athaliana_marker_OMP_decomposition.mat', 'somp');
 end

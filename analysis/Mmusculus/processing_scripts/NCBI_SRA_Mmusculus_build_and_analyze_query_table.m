@@ -8,6 +8,7 @@ function qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile )
         % all other samples in its submission were released
         % on June 05, 2013.
         qt({'SRR826224'},:).release_date = {'Jun 05, 2013'};
+        qt({'SRR826224'},:).release_date_num = datenum('Jun 05, 2013');
         
         save([qtfile, '.mat'], 'qt')
     else

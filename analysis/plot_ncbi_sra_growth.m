@@ -1,7 +1,7 @@
 function plot_ncbi_sra_growth( qt )
 % qt = query table read in from read_ncbi_sra_query_table.
 
-EXTRAPVAL = 120; % number of days to extrapolate out to
+EXTRAPVAL = 0; % number of days to extrapolate out to
 
 qt( strcmpi(qt.release_date, 'NA'), :) = [];
 
@@ -9,7 +9,7 @@ qt( strcmpi(qt.release_date, 'NA'), :) = [];
 dn = qt.release_date_num;
 mindn = min(dn);
 
-if false
+if true
     dnu = unique(dn) - mindn;
     nlib = zeros(length(dnu),1);
     for i = 1 : length(nlib)
@@ -50,10 +50,16 @@ set(gca, 'XTick', fliplr(xtick));
 set(gca, 'XTickLabel', flipud(cellstr(xticklabel)));
 rotateXLabels(gca, 36);
 ytick =  floor(exp(xtick*b(2) + b(1)));
+
+NYTICKSKIP = 3; ytick = [ytick(1:end-NYTICKSKIP), 0];
 set(gca, 'YTick', fliplr(ytick));
+set(gca, 'YTickLabel', cellstr(num2str(fliplr(ytick)'))  );
 grid on;
 set(gca,'GridLineStyle','-');
 set(gca, 'FontSize', 8);
+
+v = axis;
+axis([v(1), v(2), v(3) - v(4)*0.01, v(4)]);
 
 
     function b = estimate_growth_trend(x,y,numexclude)
