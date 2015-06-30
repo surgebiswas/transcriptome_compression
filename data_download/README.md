@@ -4,6 +4,7 @@ We'll need to install a few things before we can begin.
 
 # Aspera ascp installation
 Aspera's `ascp` is a command-line fasp transfer program that's quite a bit faster than FTP. This is the utility `srafish.pl` uses to download the raw data from the SRA. To install:
+
 1. Select the appropriate download of aspera connect from http://downloads.asperasoft.com/en/downloads/8?list
 2. For linux and mac, this should be a shell script. Make it executable `chmod +x aspera-connect-3.5.1.92523-linux-64.sh`
 3. Run it. It should install in your home directory. `./aspera-connect-3.5.1.92523-linux-64.sh`
