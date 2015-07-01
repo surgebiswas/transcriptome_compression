@@ -1,6 +1,6 @@
 function qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile )
 
-    if true
+    if false
         qt = read_ncbi_sra_query_table(qtfile);
         
         % There is an abnormal date for sample SRR826224.

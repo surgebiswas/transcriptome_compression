@@ -1,28 +1,22 @@
-function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
+function NCBI_SRA_Mmusculus_preprocess( s, qt, mainDataFile )
 
     sf = get_standard_figure_font_sizes;
+    s.estNumReads = [];
 
-    % Read the query table.
-    if true
-        qt = read_ncbi_sra_query_table(queryTable);
-        save([queryTable, '_TEMP_DO_NOT_USE.mat'], 'qt')
-    else
-        load([queryTable, '_TEMP_DO_NOT_USE.mat']);
-    end
-    
-    % Read TPM data
-    load NCBI_SRA_Athaliana_full_data_up_to_18May2015.mat;
+
     Y = s.tpm; 
     sids = s.ids;
     tids = s.transcript_id;
     depth = s.depth;
     mapped_ratio = s.mapped_ratio;
+    
+    fprintf('Original: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
 
     qt = qt(sids,:); % Re order rows of metadata table. 
     
     RCTHRESH = 4e6;
-    MRTHRESH = 0.75;
-
+    MRTHRESH = 0.70;
+    
     % Basic quality check plots. 
     % Mapped percentage vs sample depth.
     if true
@@ -41,7 +35,7 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
         axis(v);
         set(gca, 'XTick', round(logspace(2,8,7)));
 
-        plotSave('figures/mapped_pct_vs_depth.png');
+        plotSave('figures/preprocess/mapped_pct_vs_depth.png');
         close;
 
     end
@@ -52,33 +46,23 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
         Y(:, torm) = [];
         sids(torm) = [];
         qt(torm,:) = [];
+        depth(torm) = [];
+        mapped_ratio(torm) = [];
     end
-
-    % Build the gene count dataset.
-    Yd = collapse_Athaliana_isoform_table(mat2dataset(Y, 'ObsNames', tids, 'VarNames', sids));
-
-    % Keep only nuclear protein coding
-    dk = dataset('file','/Users/sbiswas/Documents/matlab/src/interactome/At_nuclear_protein_coding.txt', 'ReadObsNames', false, 'ReadVarNames', false);
-
-    o = get(Yd, 'ObsNames');
-    ok = dk.Var1;
-
-    [~, ia] = intersect(o, ok);
-    npc = setdiff(1:length(o), ia);
-    Yd_npc = Yd(npc,:); % Non protein coding features.
-    Yd = Yd(ia,:);
     
-
-    Y = double(Yd);
-    Y_npc = double(Yd_npc);
-    tids = get(Yd, 'ObsNames');
-    sids = get(Yd, 'VarNames');
+    fprintf('After mapped pct/depth threshold: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
     
     
+    % Collapse isoform table to be a gene table.
+    [tids, Y] = collapse_mouse_isoform_table(tids, Y);
+    fprintf('After collapsing isoform table: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
+    
+    % TPM profile check
     % TPM profile checking
     if true
         
-        [yp, pct, torm_pct] = TPM_profile_check(Y);
+        yp = TPM_profile_check(Y);
+        [yp, pct, torm_pct] = TPM_profile_check(Y, 'zeropropflag',mean(mean(yp == 0)) + 2*std(mean(yp == 0)));
         figure;
         semilogx(yp, pct, '-k');
         hold on
@@ -90,17 +74,15 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
         axis tight;
         axis square
         set(gca, 'XTick', logspace(-2, 5, 8));
-        plotSave('figures/TPM_profile_check.png');
+        plotSave('figures/preprocess/TPM_profile_check.png');
         close;
         
         Y(:, torm_pct) = [];
-        Y_npc(:,torm_pct) = [];
         sids(torm_pct) = [];
         depth(torm_pct) = [];
         mapped_ratio(torm_pct) = [];
         qt(torm_pct,:) = [];
     end
-    
     
     
     % Remove lowly expressed genes.
@@ -111,25 +93,10 @@ function NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable)
     end
     
     
-    
-    % Remove samples with abnormally high non-protein coding features.
-    if true
-        torm_npc = remove_samples_with_non_prot_coding_contamination(Y, Y_npc, sids);
-        
-        Y(:, torm_npc) = [];
-        Y_npc(:,torm_npc) = [];
-        sids(torm_npc) = [];
-        depth(torm_npc) = [];
-        mapped_ratio(torm_npc) = [];
-        qt(torm_npc,:) = [];
-    end
-    
-    
-
     save(mainDataFile, 'Y', 'tids', 'sids', 'depth', 'mapped_ratio', 'qt'); 
     fprintf('Output saved in %s\n', mainDataFile);
 
-
+ 
 
 end
 
