@@ -9,6 +9,11 @@ Aspera's `ascp` is a command-line fasp transfer program that's quite a bit faste
 2. For linux and mac, this should be a shell script. Make it executable `chmod +x aspera-connect-3.5.1.92523-linux-64.sh`
 3. Run it. It should install in your home directory. `./aspera-connect-3.5.1.92523-linux-64.sh`
 
+## Sailfish installation
+Sailfish is a tool to perform rapid, alignment-free quantification of isoform abundance [1]. 
+
+http://www.cs.cmu.edu/~ckingsf/software/sailfish/downloads.html
+
 ## Get `srafish.pl`
 To get `srafish.pl` you'll need to download our GitHub repository. If you have Git installed, you can grab our code by entering the following in your command line: `git clone https://github.com/surgebiswas/transcriptome_compression.git`. Otherwise, you can grab the repository manually by navigating to `https://github.com/surgebiswas/transcriptome_compression` and clicking "Clone in Desktop" or "Download Zip" (and then unzipping the archive).
 
@@ -24,5 +29,10 @@ organism=<organism_name>
 wget -O $qt_name `$url($organism[Organism]) AND "strategy rna seq"[Properties]'
 ```
 
-# Misc. notes
+## Misc. notes
 1. If getting the error: "name not found while resolving tree within virtual file system module" Try updating sra-toolkit to latest release.
+
+
+## References
+[1] Rob Patro, Stephen M. Mount, and Carl Kingsford (2014) 
+Sailfish enables alignment-free isoform quantification from RNA-seq reads using lightweight algorithms. Nature Biotechnology (doi:10.1038/nbt.2862)
