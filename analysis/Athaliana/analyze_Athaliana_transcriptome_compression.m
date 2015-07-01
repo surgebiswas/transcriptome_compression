@@ -46,8 +46,10 @@ end
 % Marker OMP decomposition
 % Run on $pw
 if true
-    somp = marker_OMP(standardize(lY), 0.25, 'savememory', true, 'maxfeatures', 100);
-    save('NCBI_SRA_Athaliana_marker_OMP_decomposition.mat', 'somp');
+    punexp = 0;
+    maxfeats = 500;
+    somp = marker_OMP(standardize(lY), punexp, 'savememory', true, 'maxfeatures', maxfeats);
+    save(sprintf('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
 end
 
 % Tradict new data from old
