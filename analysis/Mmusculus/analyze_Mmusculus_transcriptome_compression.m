@@ -27,6 +27,6 @@ load(mainDataFile);
 lY = log10(Y' + 0.1);
 
 % PCA. Percent variation explained vs. eigengene.
-if true;
+if false;
     NCBI_SRA_Mmusculus_pexp_vs_components(lY);
 end
