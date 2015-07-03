@@ -30,6 +30,7 @@ qtk = qt(samples_left,:);
 
 plot(s(:,1), s(:,2), '.k');
 hold on
+grid on
 
 if strcmpi(mode, 'bysubmission')
 
