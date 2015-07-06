@@ -12,7 +12,7 @@ qtfile = 'Mmusculus_query_table_04June2015_.csv';
 mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
 
 % Load the query table
-if true; 
+if true; % Leave true
     qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile );
 end
 

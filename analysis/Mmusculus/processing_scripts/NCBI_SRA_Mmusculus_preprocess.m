@@ -16,6 +16,7 @@ function NCBI_SRA_Mmusculus_preprocess( s, qt, mainDataFile )
     
     RCTHRESH = 4e6;
     MRTHRESH = 0.70;
+    OUTLIERTHRESH = 0.6;
     
     % Basic quality check plots. 
     % Mapped percentage vs sample depth.
@@ -91,6 +92,36 @@ function NCBI_SRA_Mmusculus_preprocess( s, qt, mainDataFile )
         Y(lg,:) = [];
         tids(lg) = [];
     end
+    
+    % Remove outliers.
+    % Check to make sure these are enriched for non-polyA samples, low
+    % input RNA samples, or single cell samples.
+    lY = log10(Y' + 0.1);
+    R = corr(lY');
+    q = mean(R,2);
+    torm_out = q < OUTLIERTHRESH;
+    
+    if true
+        hist(q, 100);
+        box on
+        axis square
+        set(gca, 'FontSize', sf.axis_tick_labels);
+        xlabel('Average correlation with other samples', 'FontSize', sf.axis_labels);
+        ylabel('Number of samples', 'FontSize', sf.axis_labels);
+        hold on  
+        v = axis;
+        plot([OUTLIERTHRESH OUTLIERTHRESH], [0 v(4)], '--r', 'LineWidth', 3);
+        plotSave('figures/preprocess/average_correlation_with_other_samples.png');
+        close;
+    end
+    
+    Y(:, torm_out) = [];
+    sids(torm_out) = [];
+    depth(torm_out) = [];
+    mapped_ratio(torm_out) = [];
+    qt(torm_out,:) = [];
+    
+    
     
     
     save(mainDataFile, 'Y', 'tids', 'sids', 'depth', 'mapped_ratio', 'qt'); 
