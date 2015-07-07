@@ -30,3 +30,12 @@ lY = log10(Y' + 0.1);
 if false;
     NCBI_SRA_Mmusculus_pexp_vs_components(lY);
 end
+
+% Marker OMP decomposition
+% Run on $pw
+if true
+    punexp = 0;
+    maxfeats = 500;
+    somp = marker_OMP(standardize(lY), punexp, 'savememory', true, 'maxfeatures', maxfeats);
+    save(sprintf('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
+end
