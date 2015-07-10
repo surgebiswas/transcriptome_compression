@@ -15,6 +15,10 @@ mkdir(archive_basename)
 fprintf('Moving data ... ');
 for i = 1 : length(ids);
     system(sprintf('mv %s %s', ids{i}, archive_basename));
+    
+    if mod(i,100) == 0
+        fprintf('%0.0f/%0.0f directories moved.\n', i, length(ids));
+    end
 end
 fprintf('Done.\n');
 
