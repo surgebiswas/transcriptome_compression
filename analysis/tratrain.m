@@ -2,6 +2,8 @@ function model = tratrain( y, x, varargin )
 % Y = samples x genes
 % x = samples x marker_genes 
 
+USE1SE = true;
+
 % Standardize variables.
 [y,uy,sy] = st(y);
 [x,ux,sx] = st(x);
@@ -15,17 +17,26 @@ I = eye(size(x,2));
 cvind = crossvalind('Kfold',size(y,1),nfold);
 
 mse = zeros(nfold,length(lambda));
+xtx = cell(nfold,1);
+xty = cell(nfold,1);
 for i = 1 : length(lambda)
     fprintf('Iter: %0.0f\tLambda = %0.6f\n', i, lambda(i));
     for j = 1 : nfold
         
-        xtrain = x(cvind ~= j,:);
-        ytrain = y(cvind ~= j,:);
+        if isempty(xtx{j})
+            xtrain = x(cvind ~= j,:);
+            ytrain = y(cvind ~= j,:);
+
+            xtest = x(cvind == j, :);
+            ytest = y(cvind == j, :);
+            
+            % Precompute the covariance and cross covariance matrices for
+            % each fold.
+            xtx{j} = xtrain'*xtrain;
+            xty{j} = xtrain'*ytrain;            
+        end
         
-        xtest = x(cvind == j, :);
-        ytest = y(cvind == j, :);
-        
-        bhat = (xtrain'*xtrain + lambda(i)*I) \ xtrain'*ytrain; % Ridge estimate.
+        bhat = (xtx{j} + lambda(i)*I) \ xty{j}; % Ridge estimate.
         in = isnan(bhat);
         if any(any(in));
             warning('NaN''s found in coefficient estimate. Setting them to 0.');
@@ -41,7 +52,25 @@ end
 
 
 % Train the full model
-[~,mind] = min(mean(mse));
+[minmse,mind] = min(mean(mse));
+
+% Use lambda value that gives mean MSE that's within 1 standard error of
+% the best mean MSE? 
+if USE1SE
+    se = zeros(1,size(mse,2));
+    for i = 1 : length(se)
+        % remove MSEs from outlying folds before calculating standard
+        % errors. This gives a more robust estimate of standard error.
+        m = mse(:,i);
+        
+        sd = std(m);
+        m( (m > mean(m) + 2*sd) | (m < mean(m) - 2*sd) ) = [];
+        
+        se(i) = std(m)/sqrt(length(m));
+    end
+    mind = find( mean(mse) < minmse+se, 1,  'last');
+end
+
 bstar = (x'*x + lambda(mind)*I) \ x'*y;
 
 
@@ -56,6 +85,7 @@ model.mse = mse;
 model.lambda_star = lambda(mind);
 model.b = bstar_us;
 model.b0 = uy - ux*model.b;
+model.b_standardized = bstar;
 
     function [m,um,sm] = st(m)
         % Standardize.
