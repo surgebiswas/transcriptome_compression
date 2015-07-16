@@ -43,7 +43,7 @@ end
 % necessary.
 if decompositionNeeded 
     fprintf('Performing OMP decomposition ... ');
-    somp = marker_OMP(ytrain, params.PROPUNEXPVAR, 'maxfeats', params.MAXFEATS, ...
+    somp = marker_OMP(standardize(ytrain), params.PROPUNEXPVAR, 'maxfeats', params.MAXFEATS, ...
         'savememory', params.SAVEMEMORY);
     save(saveFile, 'somp', 'params');
     fprintf('Done.\n');
