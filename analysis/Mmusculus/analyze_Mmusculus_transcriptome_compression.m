@@ -31,7 +31,7 @@ if false;
     NCBI_SRA_Mmusculus_pexp_vs_components(lY);
 end
 
-% Marker OMP decomposition
+% Marker OMP decomposition on FULL data.
 % Run on $pw
 if false
     punexp = 0;
@@ -40,7 +40,7 @@ if false
     save(sprintf('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
 end
 
-% Compress the full data.
+% Compress the FULL data.
 % Used for figure 2.
 if false
     NMARKERS = 100;
@@ -51,9 +51,9 @@ if false
 end
 
 
-% Heatmap of original vs. reconstruction of full data.
+% Heatmap of original vs. reconstruction of FULL data.
 % Part of Figure 2.
-if true
+if false
     NMARKERS = 100;
     load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
@@ -61,4 +61,10 @@ if true
 end
 
 
+%%% PROSPECTIVE PERFORMANCE
+% Train on 90% of data (cutoff determined by date)
+% Test on remaining 10%. 
+if true
+    evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Mmusculus_prospective_performance.mat');
+end
 
