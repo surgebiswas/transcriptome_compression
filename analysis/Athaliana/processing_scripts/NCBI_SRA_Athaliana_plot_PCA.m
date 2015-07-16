@@ -1,5 +1,7 @@
 function NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
 
+sf = get_standard_figure_font_sizes;
+
 md = dataset('XLSfile', 'NCBI_SRA_Athaliana_run_metadata.xlsx', 'Sheet', 1, 'ReadObsNames', true, 'ReadVarNames', true);
 
 
@@ -54,20 +56,22 @@ s = lY*coef(:,1:3);
             msizes = msizes/2;
         end
 
-        h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', 1 - colors{i}, ...
-            'MarkerEdgeColor', 'w', 'LineWidth', 0.5);
+        h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', colors{i}, ...
+            'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
 
 
     end
 
     grid on
     axis square
-    xlabel(sprintf('PC1 (%0.1f%%)', pexp(1)), 'FontSize', 14);
-    ylabel(sprintf('PC2 (%0.1f%%)', pexp(2)), 'FontSize', 14);
-    zlabel(sprintf('PC3 (%0.1f%%)', pexp(3)), 'FontSize', 14);
+    xlabel(sprintf('PC1 (%0.1f%%)', pexp(1)), 'FontSize', sf.axis_labels);
+    ylabel(sprintf('PC2 (%0.1f%%)', pexp(2)), 'FontSize', sf.axis_labels);
+    zlabel(sprintf('PC3 (%0.1f%%)', pexp(3)), 'FontSize', sf.axis_labels);
     l = legend(h, {'seed/endosperm', 'flower/floral bud/carpel', 'leaves/shoot', 'root', 'seedling', 'annot. pending'}, 'Location', 'NorthEastOutside');
     set(l, 'Box', 'off');
-    set(l, 'FontSize', 7);
+    set(l, 'FontSize', 12);
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    
     
     % 1 vs 2, 2 vs 3, 1 vs 3, mix1
     viewpoints = [0 90; 90 0; 0 0; -38 14];

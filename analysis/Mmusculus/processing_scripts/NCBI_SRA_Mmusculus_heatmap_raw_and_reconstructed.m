@@ -1,26 +1,18 @@
-function NCBI_SRA_Athaliana_heatmap_raw_and_reconstructed( Y, somp, model )
-
-COOVCUTOFF = 0;
-NUMMARKERS = 100;
+function NCBI_SRA_Mmusculus_heatmap_raw_and_reconstructed( Y, somp, model )
 DISPLAYRANGE = 2;
+sY = standardize(Y');
 
-coov = std(Y')./mean(Y');
-k = coov > COOVCUTOFF;
-iset = find(k);
-
-% Make sure that all of the markers are contained in the set of variably
-% expressed genes.
-assert( isempty(setdiff(somp.S(1:NUMMARKERS),iset)) );
-sY = standardize(Y(iset,:)');
-
-if false
+if true
     fprintf('Running clustering ... ');
     cg = clustergram(sY, 'Colormap', prgn, 'OptimalLeafOrder', false, 'DisplayRange', DISPLAYRANGE);
-    save('NCBI_SRA_Athaliana_clustergram_for_raw_vs_reconstructed_heatmap.mat', 'cg');
+    save('NCBI_SRA_Mmusculus_clustergram_for_raw_vs_reconstructed_heatmap.mat', 'cg');
     fprintf('Done.\n');
+    return
 else
-    load('NCBI_SRA_Athaliana_clustergram_for_raw_vs_reconstructed_heatmap.mat');
+    load('NCBI_SRA_Mmusculus_clustergram_for_raw_vs_reconstructed_heatmap.mat');
 end
+
+
 
 ri = str2double(get(cg, 'RowLabels'));
 ci = str2double(get(cg, 'ColumnLabels'));
@@ -43,7 +35,7 @@ set(gca, 'XTick', []);
 set(gca, 'YTick', []);
 set(gca, 'TickLength', [0 0]);
 box on;
-plotSave('figures/heatmap_original_vs_reconstruction/Athaliana_reconstructed_heatmap.png');
+plotSave('figures/heatmap_original_vs_reconstruction/Mmusculus_reconstructed_heatmap.png');
 close
 
 
@@ -56,7 +48,7 @@ set(gca, 'XTick', []);
 set(gca, 'YTick', []);
 set(gca, 'TickLength', [0 0]);
 box on;
-plotSave('figures/heatmap_original_vs_reconstruction/Athaliana_original_heatmap.png');
+plotSave('figures/heatmap_original_vs_reconstruction/Mmusculus_original_heatmap.png');
 close
 
 % Marker percent variance explained.
@@ -88,6 +80,7 @@ colormap(prgn);
 caxis([-DISPLAYRANGE DISPLAYRANGE]);
 plotSave('figures/heatmap_original_vs_reconstruction/colorbar.png');
 close
+
 
 
 

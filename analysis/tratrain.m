@@ -58,6 +58,7 @@ end
 % the best mean MSE? 
 if USE1SE
     se = zeros(1,size(mse,2));
+    me = zeros(1,size(mse,2));
     for i = 1 : length(se)
         % remove MSEs from outlying folds before calculating standard
         % errors. This gives a more robust estimate of standard error.
@@ -67,8 +68,9 @@ if USE1SE
         m( (m > mean(m) + 2*sd) | (m < mean(m) - 2*sd) ) = [];
         
         se(i) = std(m)/sqrt(length(m));
+        me(i) = mean(m);
     end
-    mind = find( mean(mse) < minmse+se, 1,  'last');
+    mind = find( me < minmse+se, 1,  'last');
 end
 
 bstar = (x'*x + lambda(mind)*I) \ x'*y;

@@ -33,9 +33,32 @@ end
 
 % Marker OMP decomposition
 % Run on $pw
-if true
+if false
     punexp = 0;
     maxfeats = 500;
     somp = marker_OMP(standardize(lY), punexp, 'savememory', true, 'maxfeatures', maxfeats);
     save(sprintf('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
 end
+
+% Compress the full data.
+% Used for figure 2.
+if false
+    NMARKERS = 100;
+    load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
+    model = tratrain(lY, lY(:, somp.S(1:NMARKERS)));
+    model.reconstruction = lY(:, somp.S(1:NMARKERS))*model.b + repmat(model.b0,size(lY,1),1);
+    save(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'], 'model')
+end
+
+
+% Heatmap of original vs. reconstruction of full data.
+% Part of Figure 2.
+if true
+    NMARKERS = 100;
+    load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
+    load(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
+    NCBI_SRA_Mmusculus_heatmap_raw_and_reconstructed(Y,somp, model);
+end
+
+
+

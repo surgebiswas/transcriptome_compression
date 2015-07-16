@@ -22,14 +22,20 @@ load(mainDataFile);
 lY = log10(Y' + 0.1);
 
 % Plots of Clock genes.
-if false; NCBI_SRA_Athaliana_plot_clock_genes(lY, tids); end
+if false; 
+    NCBI_SRA_Athaliana_plot_clock_genes(lY, tids); 
+end
 
 
 % Coefficient of variation density plot.
-if false; logcov = NCBI_SRA_Athalianal_COV_density_plot(Y); end
+if false; 
+    logcov = NCBI_SRA_Athalianal_COV_density_plot(Y); 
+end
 
 % Perc. variation explained vs eigengene.
-if false; [coef, pexp] = NCBI_SRA_Athaliana_pexp_vs_components(lY); end
+if false; 
+    [coef, pexp] = NCBI_SRA_Athaliana_pexp_vs_components(lY); 
+end
 
 % PCA plots
 if false
@@ -54,7 +60,7 @@ end
 
 % Compress the full data.
 % Used for figure 2.
-if true
+if false
     NMARKERS = 100;
     load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     model = tratrain(lY, lY(:, somp.S(1:NMARKERS)));
@@ -65,10 +71,10 @@ end
 
 % Heatmap of original vs. reconstruction of full data.
 % Part of Figure 2.
-if false
+if true
     NMARKERS = 100;
     load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
-    save(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'], 'model')
+    load(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
     NCBI_SRA_Athaliana_heatmap_raw_and_reconstructed(Y,somp, model);
 end
 
