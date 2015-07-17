@@ -7,6 +7,13 @@ function stats = marker_OMP( y, c, varargin )
     storecrosscorr = setParam(varargin, 'storecrosscorr', false); % Store cross correlation between residual and original matrix?
     storecoefficients = setParam(varargin, 'storecoefficients', false); % Store OMP coefficients?
     
+    if savememory; fprintf('Save memory? yes\n'); else fprintf('Save memory? no\n'); end
+    fprintf('Max. features: %0.0f\n', maxfeatures);
+    fprintf('Tolerated proportion of unexplained variance: %0.4f\n', c);
+    
+    
+    
+    
     if MAKEMOVIE; 
         figure; 
         F(1) = struct('cdata',[],'colormap',[]); 
