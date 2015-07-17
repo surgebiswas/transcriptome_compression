@@ -82,7 +82,7 @@ end
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if true
+if false
     evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
 end
 
