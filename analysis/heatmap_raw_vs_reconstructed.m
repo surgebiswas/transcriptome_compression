@@ -4,6 +4,8 @@ function heatmap_raw_vs_reconstructed( Y, somp, model, organism, runclustering, 
 % model = tratrain model.
 % organism = string specifying organism name.
 
+disp(size(Y));
+
 useksvd = setParam(varargin, 'useksvd', []);
 
 DISPLAYRANGE = 2;
