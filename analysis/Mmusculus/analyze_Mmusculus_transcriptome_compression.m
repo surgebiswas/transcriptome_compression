@@ -53,18 +53,18 @@ end
 
 % Heatmap of original vs. reconstruction of FULL data.
 % Part of Figure 2.
-if false
+if true
     NMARKERS = 100;
     load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
-    NCBI_SRA_Mmusculus_heatmap_raw_and_reconstructed(Y,somp, model);
+    heatmap_raw_vs_reconstructed(Y,somp, model, 'Mmusculus', true);
 end
 
 
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if true
+if false
     evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Mmusculus_prospective_performance.mat');
 end
 
