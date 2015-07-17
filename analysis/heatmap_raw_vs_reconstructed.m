@@ -11,11 +11,11 @@ lY = log(Y + 0.1);
 if runclustering
     fprintf('Running clustering ... ');
     [ri, ci] = hclust(sY);
-    save(sprintf('NCBI_SRA_%s_clustergram_for_raw_vs_reconstructed_heatmap.mat', organism), 'ri', 'ci');
+    save(sprintf('NCBI_SRA_%s_cluster_idx_for_raw_vs_reconstructed_heatmap.mat', organism), 'ri', 'ci');
     fprintf('Done.\n');
     return
 else
-    load(sprintf('NCBI_SRA_%s_clustergram_for_raw_vs_reconstructed_heatmap.mat', organism));
+    load(sprintf('NCBI_SRA_%s_cluster_idx_for_raw_vs_reconstructed_heatmap.mat', organism));
 end
 
 
