@@ -1,27 +1,29 @@
-function heatmap_raw_vs_reconstructed( Y, somp, model, organism, runclustering )
+function heatmap_raw_vs_reconstructed( Y, somp, model, organism, runclustering, nummarkers, varargin)
 % Y = [samples x genes] standardized expression matrix, not in log-scale. 
 % somp = result object from marker_OMP.
 % model = tratrain model.
 % organism = string specifying organism name.
 
+useksvd = setParam(varargin, 'useksvd', []);
+
 DISPLAYRANGE = 2;
 sY = standardize(Y);
-lY = log(Y + 0.1);
+%lY = log(Y + 0.1);
 
 if runclustering
     fprintf('Running clustering ... ');
-    [ri, ci] = hclust(sY);
+    [ri, ci] = hclust(sY, 'useksvd', useksvd);
     save(sprintf('NCBI_SRA_%s_cluster_idx_for_raw_vs_reconstructed_heatmap.mat', organism), 'ri', 'ci');
     fprintf('Done.\n');
     return
 else
-    load(sprintf('NCBI_SRA_%s_cluster_idx_for_raw_vs_reconstructed_heatmap.mat', organism));
+    load(sprintf('NCBI_SRA_%s_cluster_idx_for_raw_vs_reconstructed_heatmap.mat', organism));    
 end
 
 
 % Make percent variance explained vector. Sort by permuatation index in the clustered
 % heatmap.
-[~,~, ic] = intersect(somp.S(1:NUMMARKERS), ci, 'stable' );
+[~,~, ic] = intersect(somp.S(1:nummarkers), ci, 'stable' );
 p = diff([0, 1 - somp.punexp]);
 pexp = zeros(1,length(ci));
 for i = 1 : length(ic)
@@ -31,11 +33,11 @@ end
 
 % Reconstructed heatmap.
 % Model reconstruction is in log scale
-model.reconstruction = tradict(lY(:,somp.S), model);
+model.reconstruction = tradict( log10(Y(:,somp.S(1:nummarkers)) + 0.1), model);
 sY_reconstructed = standardize(10.^(model.reconstruction) - 0.1); % undoes log10(x + 0.1), and then standardizes.
 
 figure;
-imagesc(sY_reconstructed(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn);
+imagesc(sY_reconstructed(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn); % accidentally flipped ri and ci.
 set(gca, 'XTick', []);
 set(gca, 'YTick', []);
 set(gca, 'TickLength', [0 0]);

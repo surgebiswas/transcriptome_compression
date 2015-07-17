@@ -57,7 +57,7 @@ if true
     NMARKERS = 100;
     load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
-    heatmap_raw_vs_reconstructed(Y,somp, model, 'Mmusculus', true);
+    heatmap_raw_vs_reconstructed(Y',somp, model, 'Mmusculus', true, NMARKERS);
 end
 
 

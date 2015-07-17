@@ -75,7 +75,7 @@ if true
     NMARKERS = 100;
     load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
-    heatmap_raw_vs_reconstructed(Y',somp, model, 'Athaliana', false);
+    heatmap_raw_vs_reconstructed(Y',somp, model, 'Athaliana', false, NMARKERS);
 end
 
 
