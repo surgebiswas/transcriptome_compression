@@ -71,7 +71,7 @@ end
 
 % Heatmap of original vs. reconstruction of FULL data.
 % Part of Figure 2.
-if true
+if false
     NMARKERS = 100;
     load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
@@ -83,7 +83,28 @@ end
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
 if true
-    evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
+    if false
+        evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
+    else
+        load('NCBI_SRA_Athaliana_prospective_performance.mat');
+        [ perfstats ] = evaluate_tradiction( ytest, yhat, 'submissionids', qt.Submission(~trainind));
+        
+        set(0, 'currentfigure', perfstats.figs.fh_density_global);
+        plotSave('figures/prospective_performance/global_density_training_data_100pct.png')
+        set(0, 'currentfigure', perfstats.figs.fh_density_subadj);
+        plotSave('figures/prospective_performance/intrasubmission_density_training_data_100pct.png')
+        
+        set(0, 'currentfigure', perfstats.figs.fh_hist_global);
+        plotSave('figures/prospective_performance/global_histogram_training_data_100pct.png')
+        set(0, 'currentfigure', perfstats.figs.fh_hist_subadj);
+        plotSave('figures/prospective_performance/intrasubmission_histogram_training_data_100pct.png')
+        
+        set(0, 'currentfigure', perfstats.figs.cbar);
+        plotSave('figures/prospective_performance/colorbar.png');
+        close all
+        
+        
+    end
 end
 
 
