@@ -4,6 +4,7 @@ function [ coef, pexp ] = NCBI_SRA_Athaliana_pexp_vs_components( sY )
     sf = get_standard_figure_font_sizes;
     
     NUMCOMPONENTS = 500;
+    LEGENDFONTSIZE = 10;
 
     sYnull = sY;
     for i = 1 : size(sY,2)
@@ -29,13 +30,17 @@ function [ coef, pexp ] = NCBI_SRA_Athaliana_pexp_vs_components( sY )
     plot([100 100], [0 cp(100)], '-r', 'LineWidth', 2);
     hold on
     plot([1 100], [cp(100), cp(100)], '-r', 'LineWidth', 2);
-    legend(h, 'Original data', 'Null model', 'Location', 'NorthWest');
+    l = legend(h, 'Original data', 'Permuted data', 'Location', 'NorthWest');
+    set(l, 'FontSize', LEGENDFONTSIZE);
+    set(gca, 'YTick', 0:10:100);
     axis square
     set(gca, 'FontSize', sf.axis_tick_labels);
     axis tight;
-    xlabel('Principal component (eigengene)', 'FontSize', sf.axis_labels);
+    v = axis;
+    axis([v(1) v(2) 0 100]);
+    xlabel('Principal component', 'FontSize', sf.axis_labels);
     ylabel('Percent variance explained', 'FontSize', sf.axis_labels);
-    grid on
+    % grid on
     
     plotSave('figures/Pexp_vs_eigengene_full.png');
     iminvert('figures/Pexp_vs_eigengene_full.png');

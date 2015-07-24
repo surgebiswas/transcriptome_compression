@@ -1,6 +1,10 @@
 function NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
 
 sf = get_standard_figure_font_sizes;
+MSIZE = 15;
+UNANNOTSCALE = 5;
+LEGENDFONTSIZE = 10;
+SAVEFORBLACKBACKGROUND = false;
 
 md = dataset('XLSfile', 'NCBI_SRA_Athaliana_run_metadata.xlsx', 'Sheet', 1, 'ReadObsNames', true, 'ReadVarNames', true);
 
@@ -26,8 +30,8 @@ end
 s = lY*coef(:,1:3);
 
 
-    MINMSIZE = 30;
-    MAXMSIZE = 30;
+    MINMSIZE = MSIZE;
+    MAXMSIZE = MSIZE;
 
     os = 3; % artifact -- clean up later.
     maxos = max(s(:,os));
@@ -53,33 +57,50 @@ s = lY*coef(:,1:3);
         msizes = (MAXMSIZE - MINMSIZE)*norm_msizes + MINMSIZE;
         
         if strcmpi(tissues{i}{1}, 'unannotated')
-            msizes = msizes/2;
+            msizes = msizes/UNANNOTSCALE;
         end
-
-        h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', colors{i}, ...
-            'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
+        
+        if SAVEFORBLACKBACKGROUND
+            h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', 1 - colors{i}, ...
+                'MarkerEdgeColor', 'w', 'LineWidth', 0.5);
+        else
+            h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', colors{i}, ...
+                'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
+        end
 
 
     end
 
-    grid on
+    %grid on
     axis square
+    box on
     xlabel(sprintf('PC1 (%0.1f%%)', pexp(1)), 'FontSize', sf.axis_labels);
     ylabel(sprintf('PC2 (%0.1f%%)', pexp(2)), 'FontSize', sf.axis_labels);
     zlabel(sprintf('PC3 (%0.1f%%)', pexp(3)), 'FontSize', sf.axis_labels);
-    l = legend(h, {'seed/endosperm', 'flower/floral bud/carpel', 'leaves/shoot', 'root', 'seedling', 'annot. pending'}, 'Location', 'NorthEastOutside');
+    l = legend(h, {'seed/endosperm', 'flower/floral bud/carpel', 'leaves/shoot', 'root', 'seedling', 'annotation pending'}, 'Location', 'NorthEastOutside');
     set(l, 'Box', 'off');
-    set(l, 'FontSize', 12);
+    set(l, 'FontSize', LEGENDFONTSIZE);
     set(gca, 'FontSize', sf.axis_tick_labels);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'ZTick', []);
+    set(gca, 'TickLength', [0 0]);
     
     
     % 1 vs 2, 2 vs 3, 1 vs 3, mix1
-    viewpoints = [0 90; 90 0; 0 0; -38 14];
+    viewpoints = [0 90; 90 0; 0 0];
     for i = 1 : size(viewpoints,1)
         view(viewpoints(i,:));
         axis tight;
         buffer_axis;
-        plotSave(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f.png', viewpoints(i,1), viewpoints(i,2)));
+        
+        if SAVEFORBLACKBACKGROUND
+            plotSave(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
+            iminvert(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
+        else
+            plotSave(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f.png', viewpoints(i,1), viewpoints(i,2)));
+        end
+        
     end
     
     close

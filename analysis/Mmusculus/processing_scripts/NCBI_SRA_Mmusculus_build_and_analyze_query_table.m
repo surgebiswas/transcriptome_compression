@@ -12,7 +12,7 @@ function qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile )
         
         % Link run metadata
         if true
-            md = dataset('XLSfile', 'NCBI_SRA_Mmusculus_metadata.xlsx', 'Sheet', 1, 'ReadObsNames', true, 'ReadVarNames', true);
+            md = dataset('XLSfile', 'NCBI_SRA_Mmusculus_metadata_2.xlsx', 'Sheet', 1, 'ReadObsNames', true, 'ReadVarNames', true);
 
             % Link metadata with query table.
             omd = get(md, 'ObsNames');

@@ -2,6 +2,7 @@ function plot_ncbi_sra_growth( qt )
 % qt = query table read in from read_ncbi_sra_query_table.
 
 EXTRAPVAL = 0; % number of days to extrapolate out to
+sf = get_standard_figure_font_sizes;
 
 qt( strcmpi(qt.release_date, 'NA'), :) = [];
 
@@ -56,7 +57,8 @@ set(gca, 'YTick', fliplr(ytick));
 set(gca, 'YTickLabel', cellstr(num2str(fliplr(ytick)'))  );
 grid on;
 set(gca,'GridLineStyle','-');
-set(gca, 'FontSize', 8);
+set(gca, 'FontSize', sf.axis_tick_labels-4);
+ylabel('Num. HQ transcriptomes', 'FontSize', sf.axis_labels);
 
 v = axis;
 axis([v(1), v(2), v(3) - v(4)*0.01, v(4)]);

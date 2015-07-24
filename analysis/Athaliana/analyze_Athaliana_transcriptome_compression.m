@@ -21,6 +21,14 @@ if false; NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); return; end
 load(mainDataFile);
 lY = log10(Y' + 0.1);
 
+% Number of HQ transcriptomes in the SRA as a function of time.
+if true
+    plot_ncbi_sra_growth(qt);
+    plotSave('figures/growth_over_time/NCBI_SRA_Athaliana_growth_v_time.png');
+    close
+end
+
+
 % Plots of Clock genes.
 if false; 
     NCBI_SRA_Athaliana_plot_clock_genes(lY, tids); 
@@ -82,7 +90,7 @@ end
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if true
+if false
     if false
         evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
     else

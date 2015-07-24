@@ -11,10 +11,7 @@ cd(datadir);
 qtfile = 'Mmusculus_query_table_04June2015_.csv';
 mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
 
-% Load the query table
-if true; % Leave true
-    qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile );
-end
+
 
 % Pre-process, quality filter, and quality check the data.
 if false
@@ -24,12 +21,30 @@ if false
 end
 
 load(mainDataFile);
+qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
+qt = qt(sids,:);
+
 lY = log10(Y' + 0.1);
+
+
+% Number of HQ transcriptomes in the SRA as a function of time.
+if false
+    plot_ncbi_sra_growth(qt);
+    plotSave('figures/growth_over_time/NCBI_SRA_Mmusculus_growth_v_time.png');
+    close
+end
 
 % PCA. Percent variation explained vs. eigengene.
 if false;
     NCBI_SRA_Mmusculus_pexp_vs_components(lY);
 end
+
+% PCA first 1-3 dimensions.
+if true
+    load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
+    NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
+end
+    
 
 % Marker OMP decomposition on FULL data.
 % Run on $pw
