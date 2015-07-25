@@ -56,7 +56,7 @@ end
 
 % Run weighted Marker OMP
 if ~exist('somp', 'var')
-    somp = weighted_marker_OMP( lytrain, PROPUNEXP, 'obsweights', w, 'maxfeatures', NMARKERS, 'savememory', true );
+    somp = weighted_marker_OMP( lytrain, PROPUNEXP, 'obsweights', w(ktrain), 'maxfeatures', NMARKERS, 'savememory', true );
     save(saveFile, 'ktrain', 'w', 'somp');
 end
 
