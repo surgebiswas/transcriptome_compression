@@ -22,7 +22,7 @@ load(mainDataFile);
 lY = log10(Y' + 0.1);
 
 % Number of HQ transcriptomes in the SRA as a function of time.
-if true
+if false
     plot_ncbi_sra_growth(qt);
     plotSave('figures/growth_over_time/NCBI_SRA_Athaliana_growth_v_time.png');
     close

@@ -1,6 +1,12 @@
 function model = tratrain( y, x, varargin )
 % Y = samples x genes
 % x = samples x marker_genes 
+% 
+% Updated tratrain to have lambda multiplied by the size of the data. The
+% interpretation of lambda then becomes influence of the prior in terms of
+% proportions of available training data. This modification is helpful
+% since now the search space for lambda is independent of the size of the
+% dataset.
 
 USE1SE = true;
 
@@ -11,16 +17,19 @@ USE1SE = true;
 
 
 nfold = setParam(varargin, 'nfold', 10);
-lambda = setParam(varargin, 'lambda', logspace(-3, 2, 100));
+lambda = setParam(varargin, 'lambda', logspace(-8, 1, 100));
 
-I = eye(size(x,2));
+N = size(y,1)*(nfold - 1)/nfold;
+I = N*eye(size(x,2)); % Scale by size of training data.
+
 cvind = crossvalind('Kfold',size(y,1),nfold);
+
 
 mse = zeros(nfold,length(lambda));
 xtx = cell(nfold,1);
 xty = cell(nfold,1);
 for i = 1 : length(lambda)
-    fprintf('Iter: %0.0f\tLambda = %0.6f\n', i, lambda(i));
+    fprintf('Iter: %0.0f\tLambda = %0.8f\n', i, lambda(i));
     for j = 1 : nfold
         
         if isempty(xtx{j})

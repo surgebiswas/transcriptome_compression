@@ -40,7 +40,7 @@ if false;
 end
 
 % PCA first 1-3 dimensions.
-if true
+if false
     load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
 end
@@ -102,3 +102,14 @@ if false
     end
 end
 
+% Context specific performance. 
+if true
+    %label = 'hematopoetic_lymphatic';
+    %class = {'hematopoetic', 'lymphatic'};
+    label = 'nervous';
+    class = {'nervous', 'developing_nervous'};
+    
+    load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
+    saveFile = ['NCBI_SRA_Mmusculus_context_specific_prospective_performance_', label, '.mat'];
+    NCBI_SRA_Mmusculus_context_specific_performance_trial( lY, qt, coef, class, saveFile );
+end

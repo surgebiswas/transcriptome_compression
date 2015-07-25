@@ -1,6 +1,5 @@
 function stats = marker_OMP( y, c, varargin )
 % y = [samples x genes]
-% It is assumed the y is standardized.
 
     MAKEMOVIE = setParam(varargin, 'makemovie', false);
     savememory = setParam(varargin, 'savememory', false);
@@ -25,8 +24,8 @@ function stats = marker_OMP( y, c, varargin )
     Phi = [];
     S = [];
     a = zeros(size(y));
-    tvy = tv(y, w);
-    punexp = tv(r, w)/tvy;
+    tvy = tv(y);
+    punexp = tv(r)/tvy;
     crosscorr = [];
     while punexp(end) > c && length(S) < maxfeatures;
         
@@ -112,8 +111,8 @@ function stats = marker_OMP( y, c, varargin )
         [~,k] = max(z);
     end
     
-    function v = tv(x,w)
-        v = sum(var(x,w));
+    function v = tv(x)
+        v = sum(var(x));
     end
 
 end
