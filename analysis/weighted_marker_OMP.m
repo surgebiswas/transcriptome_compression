@@ -54,7 +54,6 @@ function stats = weighted_marker_OMP( y, c, varargin )
     punexp(1) = []; % always == 1
     stats.punexp = punexp;
     stats.crosscorr = crosscorr;
-    if MAKEMOVIE; F(1) = []; stats.F = F; end
 
     function [k, z] = max_sum_abs_inner_prod(rt,y)
         % The trick is to realize that we will sum over the rows of r'*y.
