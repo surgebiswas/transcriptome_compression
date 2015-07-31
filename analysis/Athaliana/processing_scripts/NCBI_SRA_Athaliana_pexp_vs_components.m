@@ -50,12 +50,12 @@ function [ coef, pexp ] = NCBI_SRA_Athaliana_pexp_vs_components( sY )
     if true
         load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
         hold on
-        h(3) = plot(100 - 100*somp.punexp, '-c', 'LineWidth', 3);
+        h(3) = plot(100 - 100*somp.punexp, '-g', 'LineWidth', 3);
         plot([100 100], [0 cp(100)], '-r', 'LineWidth', 2); % Re do vertical red line.
+        plot([1 100], 100 - 100*somp.punexp(100)*[1 1], '-r', 'LineWidth', 2);
         l = legend(h, 'PCA', 'Null model', 'Tradict', 'Location', 'NorthWest');
-        set(l, 'FontSize', 12);
+        set(l, 'FontSize', sf.axis_tick_labels);
         xlabel('Number of features', 'FontSize', sf.axis_labels);
-        grid on
         
         plotSave('figures/Pexp_vs_eigengene_full_with_MOMP.png');
         iminvert('figures/Pexp_vs_eigengene_full_with_MOMP.png');

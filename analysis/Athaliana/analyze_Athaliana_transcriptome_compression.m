@@ -41,8 +41,8 @@ if false;
 end
 
 % Perc. variation explained vs eigengene.
-if false; 
-    [coef, pexp] = NCBI_SRA_Athaliana_pexp_vs_components(lY); 
+if true; 
+    [coef, pexp] = pexp_vs_components(lY, 'Athaliana'); 
 end
 
 % PCA plots
@@ -83,7 +83,18 @@ if false
     NMARKERS = 100;
     load('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
+    
+    model.reconstruction = tradict( lY(:,somp.S(1:NMARKERS)), model);
+    
     heatmap_raw_vs_reconstructed(Y',somp, model, 'Athaliana', false, NMARKERS);
+    
+    f = pred_v_actual_density_plot(lY, model.reconstruction, 'subsample_genes', 5000);
+    hcb=colorbar;
+    ca = caxis;
+    set(hcb,'YTick',round(100*linspace(min(ca), max(ca), 4))/100);
+    sf = get_standard_figure_font_sizes;
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    plotSave('figures/heatmap_original_vs_reconstruction/insample_density_plot.png');
 end
 
 

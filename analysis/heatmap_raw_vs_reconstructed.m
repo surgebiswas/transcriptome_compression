@@ -35,56 +35,56 @@ end
 
 % Reconstructed heatmap.
 % Model reconstruction is in log scale
-model.reconstruction = tradict( log10(Y(:,somp.S(1:nummarkers)) + 0.1), model);
 sY_reconstructed = standardize(10.^(model.reconstruction) - 0.1); % undoes log10(x + 0.1), and then standardizes.
 
-figure;
-imagesc(sY_reconstructed(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn); % accidentally flipped ri and ci.
-set(gca, 'XTick', []);
-set(gca, 'YTick', []);
-set(gca, 'TickLength', [0 0]);
-box on;
-plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_reconstructed_heatmap.png', organism));
-close
+if false
+    figure;
+    imagesc(sY_reconstructed(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn); % accidentally flipped ri and ci.
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    box on;
+    plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_reconstructed_heatmap.png', organism));
+    close
 
 
 
-% Original heatmap
-figure;
-imagesc(sY(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn);
-set(gca, 'XTick', []);
-set(gca, 'YTick', []);
-set(gca, 'TickLength', [0 0]);
-box on;
-plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_original_heatmap.png', organism));
-close
+    % Original heatmap
+    figure;
+    imagesc(sY(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    box on;
+    plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_original_heatmap.png', organism));
+    close
 
-% Marker percent variance explained.
-figure;
-hold on;
-qq = find(pexp);
-for i = 1 : length(qq)
-    plot([qq(i), qq(i)], [0 pexp(qq(i))], '-k', 'LineWidth', 3);
+    % Marker percent variance explained.
+    figure;
+    hold on;
+    qq = find(pexp);
+    for i = 1 : length(qq)
+        plot([qq(i), qq(i)], [0 pexp(qq(i))], '-k', 'LineWidth', 3);
+    end
+    axis tight;
+    v = axis;
+    axis([0 length(pexp) 0 v(4)]);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    box off;
+    plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_marker_pexp_bars.png', organism));
+    close
+
+    % Colorbar
+    figure;
+    colorbar;
+    axis off
+    colormap(prgn);
+    caxis([-DISPLAYRANGE DISPLAYRANGE]);
+    plotSave('figures/heatmap_original_vs_reconstruction/colorbar.png');
+    close
 end
-axis tight;
-v = axis;
-axis([0 length(pexp) 0 v(4)]);
-set(gca, 'XTick', []);
-set(gca, 'YTick', []);
-set(gca, 'TickLength', [0 0]);
-box off;
-plotSave(sprintf('figures/heatmap_original_vs_reconstruction/%s_marker_pexp_bars.png', organism));
-close
-
-% Colorbar
-figure;
-colorbar;
-axis off
-colormap(prgn);
-caxis([-DISPLAYRANGE DISPLAYRANGE]);
-plotSave('figures/heatmap_original_vs_reconstruction/colorbar.png');
-close
-
 
 
 

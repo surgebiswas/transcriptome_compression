@@ -49,24 +49,36 @@ strain = s(qclass2&ktrain,:);
 w = mvnpdf(s, mean(strain), GAMMA*cov(strain));
 
 
-% Now begin the heavy computations.
-if exist(saveFile, 'file');
-    load(saveFile);
+if false
+    % Now begin the heavy computations.
+    if exist(saveFile, 'file');
+        load(saveFile);
+    end
+
+    % Run weighted Marker OMP
+    if ~exist('somp', 'var')
+        somp = weighted_marker_OMP( lytrain, PROPUNEXP, 'obsweights', w(ktrain), 'maxfeatures', NMARKERS, 'savememory', true );
+        save(saveFile, 'ktrain', 'w', 'somp');
+    end
+
+
+    % Tratrain.
+    if ~exist('model', 'var');
+        model = tratrain(lytrain, lytrain(:, somp.S));
+        save(saveFile, 'ktrain', 'w', 'somp', 'model');
+    end
+else
+    load(saveFile)
+    
+    lytest_hat = tradict(lytest(:,somp.S), model);
+    %perfstats = evaluate_tradiction(lytest, lytest_hat, 'submissionids', qttest.Submission);
+    
+    sf = get_standard_figure_font_sizes;
+    pred_v_actual_density_plot(subadjust(lytest, qttest.Submission), subadjust(lytest_hat, qttest.Submission));
+    colorbar;
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    
 end
-
-% Run weighted Marker OMP
-if ~exist('somp', 'var')
-    somp = weighted_marker_OMP( lytrain, PROPUNEXP, 'obsweights', w(ktrain), 'maxfeatures', NMARKERS, 'savememory', true );
-    save(saveFile, 'ktrain', 'w', 'somp');
-end
-
-
-% Tratrain.
-if ~exist('model', 'var');
-    model = tratrain(lytrain, lytrain(:, somp.S));
-    save(saveFile, 'ktrain', 'w', 'somp', 'model');
-end
-
 
 
 end

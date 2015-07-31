@@ -36,7 +36,7 @@ end
 
 % PCA. Percent variation explained vs. eigengene.
 if false;
-    NCBI_SRA_Mmusculus_pexp_vs_components(lY);
+     [coef, pexp] = pexp_vs_components(lY, 'Mmusculus'); 
 end
 
 % PCA first 1-3 dimensions.
@@ -72,7 +72,19 @@ if false
     NMARKERS = 100;
     load('NCBI_SRA_Mmusculus_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat');
     load(['NCBI_SRA_Mmusculus_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'])
+    
+    model.reconstruction = tradict( lY(:,somp.S(1:NMARKERS)), model);
+
     heatmap_raw_vs_reconstructed(Y',somp, model, 'Mmusculus', false, NMARKERS);
+    
+    f = pred_v_actual_density_plot(lY, model.reconstruction, 'subsample_genes', 5000);
+    hcb=colorbar;
+    ca = caxis;
+    set(hcb,'YTick',round(100*linspace(min(ca), max(ca), 4))/100);
+    sf = get_standard_figure_font_sizes;
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    plotSave('figures/heatmap_original_vs_reconstruction/insample_density_plot.png');
+    
 end
 
 
@@ -104,12 +116,32 @@ end
 
 % Context specific performance. 
 if true
-    %label = 'hematopoetic_lymphatic';
-    %class = {'hematopoetic', 'lymphatic'};
-    label = 'nervous';
-    class = {'nervous', 'developing_nervous'};
+    label = 'hematopoetic_lymphatic';
+    class = {'hematopoetic', 'lymphatic'};
+    %label = 'nervous';
+    %class = {'nervous', 'developing_nervous'};
     
     load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
     saveFile = ['NCBI_SRA_Mmusculus_context_specific_prospective_performance_', label, '.mat'];
     NCBI_SRA_Mmusculus_context_specific_performance_trial( lY, qt, coef, class, saveFile );
+    plotSave(['figures/prospective_performance/NCBI_SRA_Mmusculus_context_specific_prospective_performance_', label, '.png']);
+    close
+    
+%     if false
+%         load('Mmusculus_context_specific_test_data.mat');
+%         pred_v_actual_density_plot(ytrues,yhats);
+%         plotSave('figures/prospective_performance/test_context_specific_hematopoetic.png');
+%         iminvert('figures/prospective_performance/test_context_specific_hematopoetic.png');
+%         close
+%         
+%         ytrues = [randn(100, 400); 2.5+randn(200, 400)];
+%         yhats = ytrues + 1.2*randn(300,400);
+%         pred_v_actual_density_plot(ytrues,yhats);
+%        
+%         plotSave('figures/prospective_performance/test_context_specific_nervous.png');
+%         iminvert('figures/prospective_performance/test_context_specific_nervous.png');
+%         close
+%         
+%     end
+    
 end
