@@ -1,6 +1,10 @@
-function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
+function PC_stability_plots( coef, pexp, lY, qt, varargin )
+% Evolution of the gene expression space over time.
+    sf = get_standard_figure_font_sizes;
+    makemovie = setParam(varargin, 'makemovie', false);
+    makeheatmaps = setParam(varargin, 'makeheatmaps', false);
+    makersqplots = setParam(varargin, 'makersqplots', false);
 
-    
     
     dn = datenum(qt.release_date);
     dnu = unique(dn); % sorted earliest to latest.
@@ -10,7 +14,7 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
     s = lY*coef(:,1:10); % project onto the first few principal components.
     
     % Movie of PCA over time.
-    if false
+    if makemovie
         MAXCOMP = 3;
         cm = cbrewer('qual', 'Set1', length(dnu), 'cubic');
         figure;
@@ -56,19 +60,20 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
     end
     
     % Compute temporal stability maps
-    if false
+    mfile = 'figures/PC_stability/PC_stability_maps.mat';
+    if ~exist(mfile, 'file');
         for j = 1 : 10; %length(pm)
             fprintf('Computing PC stability map %0.0f\n', j);
             [pm{j}, cmax(j)] = pc_temporal_density_map(s(:,j), dn, dnu);
         end
-        save('figures/PC_stability/PC_stability_maps.mat');
+        save(mfile, 'pm', 'cmax');
     else
-        load('figures/PC_stability/PC_stability_maps.mat');
+        load(mfile);
     end
     
     
     % Plot heatmaps
-    if false
+    if makeheatmaps
         cm = cbrewer('seq', 'YlOrRd', length(dnu), 'cubic');
         cmaxmax = 0.9*max(cmax);
         
@@ -101,11 +106,14 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
             ytl = [min(s(:,j)), max(s(:,j))];
             v = axis;
             yt = [v(3), v(4)];
-            set(gca, 'YTick', yt);
-            set(gca, 'YTickLabel', fliplr(ytl));
+            set(gca, 'YTick', []);
+            %set(gca, 'YTick', yt);
+            %set(gca, 'YTickLabel', round(100*fliplr(ytl))/100);
             
-            yl = ylabel(sprintf('PC%0.0f (%0.1f%%)', j, pexp(j)), 'FontSize', 12);
+            yl = ylabel(sprintf('PC%0.0f (%0.1f%%)', j, pexp(j)), 'FontSize', sf.axis_labels - 6);
             set(yl, 'Units', 'Normalized', 'Position', [-0.03, 0.5, 0]);
+            
+            set(gca, 'FontSize', sf.axis_tick_labels - 6);
             
             plotSave(sprintf('figures/PC_stability/PC%0.0f_temporal_density_plot.png', j));
             close
@@ -120,9 +128,9 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
          for j = 1 : MAXCOMP
              im = imread(sprintf('figures/PC_stability/PC%0.0f_temporal_density_plot.png', j));
              if j == MAXCOMP
-                im([1:180, 950:end],:, :) = [];
+                im([1:370, 1170:end],:, :) = [];
              else
-                 im([1:180, 745:end],:, :) = [];
+                 im([1:370, 880:end],:, :) = [];
              end
              ims = cat(1, ims, im);
          end
@@ -130,7 +138,7 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
     end
     
     % Plot R^2 to final over time.
-    if true
+    if makersqplots
         figure;
         hold on
         
@@ -145,9 +153,11 @@ function NCBI_SRA_Athaliana_PC_stability( coef, pexp, lY, qt )
         set(gca, 'XTick', fliplr(xt));
         set(gca, 'XTickLabel', flipud(cellstr(datestr(xt + min(dnu)))) ) ;
         rotateXLabels(gca, 36);
+        set(gca, 'FontSize', sf.axis_tick_labels - 6);
 
-        ylabel('R^2', 'FontSize', 12);
+        ylabel('Pearson correlation', 'FontSize', sf.axis_labels);
         plotSave('figures/PC_stability/PC_density_Rsq_vs_time.png');
+        close
     end
       
     

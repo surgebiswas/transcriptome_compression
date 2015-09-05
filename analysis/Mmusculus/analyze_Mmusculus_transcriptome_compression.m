@@ -36,13 +36,23 @@ end
 
 % PCA. Percent variation explained vs. eigengene.
 if false;
-     [coef, pexp] = pexp_vs_components(lY, 'Mmusculus'); 
+    load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
+    [coef, pexp] = pexp_vs_components(lY, 'Mmusculus'); 
 end
 
 % PCA first 1-3 dimensions.
 if false
     load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
+end
+
+
+% PCA plots by submission, for supplemental figures
+if false;
+    load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
+    pca_by_submission(lY, qt, coef, pexp);
+    plotSave('figures/pca/NCBI_SRA_Mmusculus_PCA_by_submission.png');
+    close;
 end
     
 
@@ -115,7 +125,7 @@ if false
 end
 
 % Context specific performance. 
-if true
+if false
     label = 'hematopoetic_lymphatic';
     class = {'hematopoetic', 'lymphatic'};
     %label = 'nervous';

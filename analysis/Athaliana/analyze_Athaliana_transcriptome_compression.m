@@ -41,15 +41,30 @@ if false;
 end
 
 % Perc. variation explained vs eigengene.
-if true; 
+if false; 
     [coef, pexp] = pexp_vs_components(lY, 'Athaliana'); 
 end
 
-% PCA plots
+% PCA plots for main figures
 if false
-    load('PCA_pexp_vs_eigengene_params.mat');
+    load('NCBI_SRA_Athaliana_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
 end
+
+% PCA plots by submission, for supplemental figures
+if false;
+    load('NCBI_SRA_Athaliana_PCA_pexp_vs_eigengene_params.mat');
+    pca_by_submission(lY, qt, coef, pexp);
+    plotSave('figures/pca/NCBI_SRA_Athaliana_PCA_by_submission.png');
+    close;
+end
+
+% PC Stability plots for supplemental
+if false
+    load('NCBI_SRA_Athaliana_PCA_pexp_vs_eigengene_params.mat');
+    PC_stability_plots(coef,pexp,lY,qt, 'makersqplots', true);
+end
+
 
 % Convergence of data clusters along the principal components.
 if false; 
@@ -102,7 +117,7 @@ end
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
 if false
-    if false
+    if true
         evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
     else
         load('NCBI_SRA_Athaliana_prospective_performance.mat');
