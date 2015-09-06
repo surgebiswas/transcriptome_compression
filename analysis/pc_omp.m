@@ -12,7 +12,7 @@ assert(abs(sum(w) - 1) < 1e-10, 'Observation weights must sum to 1');
 % Center the PC matrix. We only center the PC matrix because we want the
 % first few components to retain their 'importance'.
 x = wst(x,w,false);
-s = wst(s,w,true);
+s = wst(s,w,true); %%%% change back to true
 
 L = [];
 Phi = [];
@@ -29,7 +29,8 @@ while punexp(end) > maxpropunexplained && length(L) < maxfeats;
     Phi = [Phi, x(:,l)];
     
     % Orthogonal projection
-    b = Phi'*Phi \ Phi'*s;
+    wPhi = weight(Phi,w);
+    b = Phi'*wPhi \ wPhi'*s;
     a = Phi*b;
     r = s - a;
     

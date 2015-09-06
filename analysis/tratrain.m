@@ -94,6 +94,7 @@ bstar_us = SY2.*bstar./SX2;
 
 model.mse = mse;
 model.lambda_star = lambda(mind);
+model.lambda_star_idx = mind;
 model.b = bstar_us;
 model.b0 = uy - ux*model.b;
 model.b_standardized = bstar;
