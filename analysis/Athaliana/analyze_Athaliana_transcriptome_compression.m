@@ -11,6 +11,13 @@ cd(datadir);
 mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed_updated_09June2015.mat';
 queryTable = 'Athaliana_query_table_18May2015_shuffled_.csv';
 
+% Output list of successfully downloaded samples.
+if false; 
+    fts = regexprep(filetimestamp, '_.+', '');
+    
+    output_list_of_successful_downloads('NCBI_SRA_Athaliana_full_data_up_to_18May2015.mat', ['NCBI_SRA_Athaliana_successfully_downloaded_', fts, '.txt']);
+end
+
 % Some pre-processing.
 % Basic quality checks, and sample thresholding.
 % Isoform collapsing to genes
