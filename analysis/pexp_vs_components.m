@@ -9,7 +9,7 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
         sYnull(:,i) = sY(randperm(size(sY,1)),i);
     end
     
-    if false
+    if true
         disp('Computing for full model');
         [coef, ~, ~, ~, pexp] = pca(sY, 'NumComponents', NUMCOMPONENTS);
         

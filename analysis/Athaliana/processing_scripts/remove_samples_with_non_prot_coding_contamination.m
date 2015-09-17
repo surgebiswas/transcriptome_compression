@@ -23,12 +23,13 @@ function [ mask ] = remove_samples_with_non_prot_coding_contamination( Ypc, Ynpc
     no = strcmpi(polyAs, 'no');
     
     figure
+    sf = get_standard_figure_font_sizes;
     hold on
     hb = bar(rs); ydata = get(hb, 'YData');
     plot(find(no), ydata(no), 'or');
    % plot(find(NA), ydata(NA), '.', 'Color', [0.6 0.6 0.6]);
-    xlabel('Sample');
-    ylabel('Proportion non-protein coding');
+    xlabel('Sample', 'FontSize', sf.axis_labels);
+    ylabel('Proportion non-protein coding', 'FontSize', sf.axis_labels);
     
     
     % The above plot suggests any sample with > ~58% non-protein coding is a good idea
@@ -40,7 +41,8 @@ function [ mask ] = remove_samples_with_non_prot_coding_contamination( Ypc, Ynpc
     axis tight;
     axis square
     box on
-    plotSave('figures/non_protein_coding_proportions_and_cutoff.png');
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    plotSave('figures/quality_filter/non_protein_coding_proportions_and_cutoff.png');
     close
     
     mask = r > CUTOFF;

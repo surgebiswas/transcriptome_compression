@@ -8,8 +8,37 @@ path(genpath(['~/GitHub/', repo]), path);
 cd(datadir);
 
 %mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed.mat';
-mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed_updated_09June2015.mat';
+mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_06Sept2015_quality_filtered.mat';
 queryTable = 'Athaliana_query_table_18May2015_shuffled_.csv';
+
+% Update raw (unquality filtered) collection of transcriptomes.
+if false
+    load('NCBI_SRA_Athaliana_full_data_up_to_18May2015.mat');
+    [~,sidx] = sort(s.transcript_id);
+    s.tpm = s.tpm(sidx,:);
+    s.transcript_id = s.transcript_id(sidx);
+    s1 = s;
+    
+    load('Athaliana_download_06Sept2015_assembled_srafish_output.mat');
+    [~,sidx] = sort(s.transcript_id);
+    s.tpm = s.tpm(sidx,:);
+    s.transcript_id = s.transcript_id(sidx);
+    
+    % Ensure transcript ID's are in the same orders. TPM tables are sorted
+    % accordingly as well.
+    for i = 1 : length(s.transcript_id)
+        assert(strcmpi(s.transcript_id{i}, s1.transcript_id{i}));
+    end
+    
+    
+    sjoin.ids = [s1.ids, s.ids];
+    sjoin.mapped_ratio = [s1.mapped_ratio, s.mapped_ratio];
+    sjoin.tpm = [s1.tpm, s.tpm];
+    sjoin.transcript_id = s.transcript_id; % Known to be the same as s1.
+    sjoin.depth = [s1.depth, s.depth];
+    
+    save('NCBI_SRA_Athaliana_full_data_up_to_06Sept2015.mat', 'sjoin');
+end
 
 % Output list of successfully downloaded samples.
 if false; 
@@ -18,12 +47,29 @@ if false;
     output_list_of_successful_downloads('NCBI_SRA_Athaliana_full_data_up_to_18May2015.mat', ['NCBI_SRA_Athaliana_successfully_downloaded_', fts, '.txt']);
 end
 
-% Some pre-processing.
-% Basic quality checks, and sample thresholding.
+% Quality filter. Sample and expression filtering.
 % Isoform collapsing to genes
 % Keeping of nuclear protein coding genes.
 % Check TPM profiles
-if false; NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); return; end
+if false; 
+    %NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); 
+    load('NCBI_SRA_Athaliana_full_data_up_to_06Sept2015.mat');
+    [Y, sids, tids] = quality_filter(sjoin, 'Athaliana');
+    
+    % Prepare the query table
+    qt_full = read_ncbi_sra_query_table('Athaliana_query_table_06Sept2015.csv');
+    
+    % Some entries from the SRA have been removed before we updated
+    % the query table. Remove these samples from analysis.
+    k = steq(sids, get(qt_full, 'ObsNames'));
+    Y = Y(:,k);
+    sids = sids(k);
+    
+    qt = qt_full(sids,:);
+    save(mainDataFile, 'Y', 'tids', 'sids', 'qt');
+
+    return; 
+end
 
 load(mainDataFile);
 lY = log10(Y' + 0.1);
@@ -123,7 +169,7 @@ end
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if false
+if true
     if true
         evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
     else

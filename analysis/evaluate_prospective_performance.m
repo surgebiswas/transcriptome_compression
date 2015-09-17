@@ -9,7 +9,7 @@ params.SAVEMEMORY = false;
 params.LAMBDASCHEDULE = logspace(-3, 2, 100);
 params.TESTPROP = 0.1; % Proportion of submissions that should be kept in the test set.
 params.PROPUNEXPVAR = 0;
-params.MAXFEATS = 100;
+params.MAXFEATS = 500;
 
 % 1. Split the data into training and test sets.
 [ytrain, ytest, trainind] = partition_data(lY, qt, params.TESTPROP);
