@@ -6,7 +6,6 @@ function evaluate_prospective_performance( lY, qt, saveFile )
 
 % CONSTANTS/PARAMETERS
 params.SAVEMEMORY = false;
-params.LAMBDASCHEDULE = logspace(-3, 2, 100);
 params.TESTPROP = 0.1; % Proportion of submissions that should be kept in the test set.
 params.PROPUNEXPVAR = 0;
 params.MAXFEATS = 500;
@@ -53,7 +52,7 @@ end
 
 if tratrainingNeeded
     fprintf('Performing tratraining ... ');
-    model = tratrain(ytrain, ytrain(:,somp.S), 'lambda', params.LAMBDASCHEDULE);
+    model = tratrain(ytrain, ytrain(:,somp.S));
     save(saveFile, 'somp', 'model', 'params');
     fprintf('Done.\n');
 else
