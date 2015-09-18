@@ -31,7 +31,7 @@ wget -O $qt_name `$url($organism[Organism]) AND "strategy rna seq"[Properties]'
 
 ## Misc. notes
 1. If getting the error: "name not found while resolving tree within virtual file system module" Try updating sra-toolkit to latest release.
-
+2. The data illustrated in our paper comes from several distinct downloads. For A. thaliana, downloads were performed on 02-May-2015, 18-May-2015, and 06-Sept-2015. For M. musculus, downloads were performed on 04-June-2015, and 11-July-2015. Downloads after the first were "update" downloads in which only new datasets published to the SRA were downloaded. 
 
 ## References
 [1] Rob Patro, Stephen M. Mount, and Carl Kingsford (2014) 
