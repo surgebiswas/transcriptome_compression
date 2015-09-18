@@ -138,7 +138,7 @@ end
 if true 
     punexp = 0;
     maxfeats = 500;
-    somp = marker_OMP(standardize(lY), punexp, 'savememory', true, 'maxfeatures', maxfeats);
+    somp = marker_OMP(standardize(lY), punexp, 'savememory', false, 'maxfeatures', maxfeats);
     save(sprintf('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
 end
 
