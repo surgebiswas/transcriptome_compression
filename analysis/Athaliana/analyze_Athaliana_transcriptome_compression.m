@@ -135,7 +135,7 @@ end
 
 % Marker OMP decomposition on FULL data
 % Run on $pw
-if true 
+if false 
     punexp = 0;
     maxfeats = 500;
     somp = marker_OMP(standardize(lY), punexp, 'savememory', false, 'maxfeatures', maxfeats);
@@ -177,8 +177,8 @@ end
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if false
-    if true
+if true
+    if false
         evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
     else
         load('NCBI_SRA_Athaliana_prospective_performance.mat');

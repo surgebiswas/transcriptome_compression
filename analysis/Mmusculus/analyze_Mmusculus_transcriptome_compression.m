@@ -12,6 +12,19 @@ qtfile = 'Mmusculus_query_table_04June2015_.csv';
 mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
 
 
+% Output a list of all successfully downloaded samples we have so far.
+if false
+    load NCBI_SRA_Mmusculus_download_04June2015_prelim.mat
+    d = dataset('file', 'successfully_processed_list_11July2015_download.txt', 'ReadObsNames', false, 'ReadVarNames', false);
+    
+    ids1 = s.ids';
+    ids2 = d.Var1;
+    
+    dlmcell('all_successfully_downloaded_up_through_11July2015_download.txt', [ids1;ids2]);
+    
+    return
+end
+
 
 % Pre-process, quality filter, and quality check the data.
 if false
