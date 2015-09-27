@@ -5,7 +5,7 @@ function evaluate_prospective_performance( lY, qt, saveFile )
 
 
 % CONSTANTS/PARAMETERS
-params.SAVEMEMORY = false;
+params.SAVEMEMORY = true;
 params.TESTPROP = 0.1; % Proportion of submissions that should be kept in the test set.
 params.PROPUNEXPVAR = 0;
 params.MAXFEATS = 500;

@@ -64,14 +64,25 @@ function stats = marker_OMP( y, c, varargin )
             F(end+1) = getframe(gcf);
         end
         
+        % Use r_eff? an effective, but reduced representation of the
+        % residual.
+        if true
+            vr = var(r);
+            pct = prctile(vr, 90);
+            ki = randsample(length(vr), round(length(vr)/10) );% vr > (pct - 1e-8); % Subtract 1e-8 to account for numerical precision errors in first iteration.
+            
+            r_eff = r(:,ki);
+        else
+            r_eff = r;
+        end
         
         % Naively computing the inner product will produce a genes x genes
         % correlation matrix, which may be quite difficult to store in
         % memory.
         if savememory
-            [k,z] = max_sum_abs_inner_prod(r',y);
+            [k,z] = max_sum_abs_inner_prod(r_eff',y);
         else
-            z = sum(abs(r'*y))/(size(y,2)*size(y,1));
+            z = sum(abs(r_eff'*y))/(size(y,2)*size(y,1));
             [~, k] = max(z); 
         end
         
