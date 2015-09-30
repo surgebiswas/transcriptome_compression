@@ -2,7 +2,7 @@
 old = cd('/proj/dangl_lab/sbiswas/GitHub/data/transcriptome_compression/jbm/count_files');
 d = dataset('file', 'jbm_to_sailfish.txt', 'ReadVarNames', false, 'ReadObsNames', false);
 
-for i = 1 : length(d.Var1{i})
+for i = 1 : length(d.Var1)
     % Copy the file
     cmd = sprintf('cp %s .', d.Var1{i});
     fprintf('%s\n', cmd);
