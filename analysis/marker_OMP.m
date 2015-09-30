@@ -6,6 +6,8 @@ function stats = marker_OMP( y, c, varargin )
     maxfeatures = setParam(varargin, 'maxfeatures', Inf);
     storecrosscorr = setParam(varargin, 'storecrosscorr', false); % Store cross correlation between residual and original matrix?
     storecoefficients = setParam(varargin, 'storecoefficients', false); % Store OMP coefficients?
+    subsampleresidual = setParam(varargin, 'subresidual', 0.1); % Fraction (0,1) of residual to subsample to. 
+    pickrandomly = setParam(varargin, 'pickrandomly', false);
     
     if savememory; fprintf('Save memory? yes\n'); else fprintf('Save memory? no\n'); end
     fprintf('Max. features: %0.0f\n', maxfeatures);
@@ -64,29 +66,35 @@ function stats = marker_OMP( y, c, varargin )
             F(end+1) = getframe(gcf);
         end
         
-        % Use r_eff? an effective, but reduced representation of the
-        % residual.
-        if true
-            vr = var(r);
-            pct = prctile(vr, 90);
-            ki = randsample(length(vr), round(length(vr)/10) );% vr > (pct - 1e-8); % Subtract 1e-8 to account for numerical precision errors in first iteration.
-            
-            r_eff = r(:,ki);
+        if pickrandomly
+            k = randsample(setdiff(1:size(y,2), S), 1);
         else
-            r_eff = r;
-        end
         
-        % Naively computing the inner product will produce a genes x genes
-        % correlation matrix, which may be quite difficult to store in
-        % memory.
-        if savememory
-            [k,z] = max_sum_abs_inner_prod(r_eff',y);
-        else
-            z = sum(abs(r_eff'*y))/(size(y,2)*size(y,1));
-            [~, k] = max(z); 
-        end
+            % Use r_eff? an effective, but reduced representation of the
+            % residual.
+            if true
+                vr = var(r);
+                %pct = prctile(vr, 90);
+                ki = randsample(length(vr), round(length(vr)*subsampleresidual) );% vr > (pct - 1e-8); % Subtract 1e-8 to account for numerical precision errors in first iteration.
+
+                r_eff = r(:,ki);
+            else
+                r_eff = r;
+            end
+
+            % Naively computing the inner product will produce a genes x genes
+            % correlation matrix, which may be quite difficult to store in
+            % memory.
+            if savememory
+                [k,z] = max_sum_abs_inner_prod(r_eff',y);
+            else
+                z = sum(abs(r_eff'*y))/(size(y,2)*size(y,1));
+                [~, k] = max(z); 
+            end
+
+            if storecrosscorr; crosscorr = [crosscorr; z]; end;
         
-        if storecrosscorr; crosscorr = [crosscorr; z]; end;
+        end
         S = [S,k];
         Phi = [Phi, y(:,k)];
         

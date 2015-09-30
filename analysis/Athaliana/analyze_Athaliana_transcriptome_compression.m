@@ -177,7 +177,7 @@ end
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)
 % Test on remaining 10%. 
-if true
+if false
     if true
         evaluate_prospective_performance(lY,qt, 'NCBI_SRA_Athaliana_prospective_performance.mat');
     else
@@ -202,6 +202,18 @@ if true
     end
 end
 
+% Test of residual subsampling. 
+% Compare to result of compressing full data.
+if true
+    punexp = 0;
+    maxfeats = 100;
+    subsampleto = [0.01 0.05 0.1];
+    
+    for i = 1 : length(subsampleto)
+        somp{i} = marker_OMP(standardize(lY), punexp, 'savememory', true, 'maxfeatures', maxfeats, 'subresidual', subsampleto(i));
+        save(sprintf('NCBI_SRA_Athaliana_marker_OMP_decomposition_residual_subsample_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp', 'subsampleto');
+    end
+end
 
 
 % PURGATORY

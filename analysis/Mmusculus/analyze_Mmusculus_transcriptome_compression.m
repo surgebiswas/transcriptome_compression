@@ -11,6 +11,24 @@ cd(datadir);
 qtfile = 'Mmusculus_query_table_04June2015_.csv';
 mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
 
+% Construction full collection of raw transcriptomes.
+if true
+    load('assembled_srafish_output/NCBI_SRA_Mmusculus_download_04June2015_prelim.mat');
+    s1 = s;
+    
+    load('assembled_srafish_output/Mmusculus_download_11July2015_assembled_srafish_output.mat');
+    s2 = s;
+    
+    load('assembled_srafish_output/Mmusculus_download_19Sept2015_assembled_srafish_output.mat');
+    s3 = s;
+    
+    s = update_raw_transcriptome_collection(s1,s2);
+    s = update_raw_transcriptome_collection(s, s3);
+    
+    save('NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015.mat', 's', '-v7.3');
+    return;
+end
+
 
 % Output a list of all successfully downloaded samples we have so far.
 if false
