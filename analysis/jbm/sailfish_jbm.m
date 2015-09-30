@@ -19,7 +19,7 @@ for i = 1 : length(d.Var1)
     
     
     % Sailfish
-    splits = regxpi(fname, '_', 'split');
+    splits = regexpi(fname, '_', 'split');
     outdir = [splits{1}, '_', splits{2}];
     mkdir(outdir);
     cmd = sprintf('sailfish quant -i %s -l ''T=SE:S=U'' -r %s -o %s -p 6 &> %s', ...
