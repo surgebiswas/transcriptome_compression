@@ -30,7 +30,7 @@ for i = 1 : length(d.Var1)
     %system(cmd);
     
     cmd = sprintf('mv %s %s', fnamefasta, outdir);
-    fprintf('%s\n', ccmd);
+    fprintf('%s\n', cmd);
     %system(cmd);
     
     return;
