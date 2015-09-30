@@ -2,9 +2,17 @@ clear;
 rng('default');
 
 % Initialize environment
+[~,hn] = unix('hostname'); % Get hostname.
+if ~isempty(strfind(hn, '.local'))
+    % We are working locally
+    homedir = '/Users/sbiswas';
+elseif ~isempty(strfind(hn, '.kd.unc.edu'))
+    % We are on killdevil
+    homedir = '/proj/dangl_lab/sbiswas';
+end
 repo = 'transcriptome_compression/';
-datadir = ['~/GitHub/data/', repo, 'Mmusculus/'];
-path(genpath(['~/GitHub/', repo]), path);
+datadir = [homedir, '/GitHub/data/', repo, 'Mmusculus/'];
+path(genpath([homedir, '/GitHub/', repo]), path);
 cd(datadir);
 
 % General variables
