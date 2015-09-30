@@ -1,6 +1,8 @@
 
 old = cd('/proj/dangl_lab/sbiswas/GitHub/data/transcriptome_compression/jbm/count_files');
 d = dataset('file', 'jbm_to_sailfish.txt', 'ReadVarNames', false, 'ReadObsNames', false);
+cmdfile = 'jbm_sailfish_cmd_calls.txt';
+fid = fopen(cmdfile, 'w+');
 
 for i = 1 : length(d.Var1)
     % Copy the file
@@ -32,11 +34,11 @@ for i = 1 : length(d.Var1)
     bcmd = sprintf('bsub -q day -M 30 -o %s -e %s -n 6 -R "span[hosts=1]" "%s"', ...
         [outdir, '/lsf.out'], [outdir, '/lsf.err'], cmd);
     fprintf('%s\n', bcmd);
-    system(cmd);
+    %system(cmd);
     
-    
-    
+    fprintf(fid, '%s\n', bcmd);
+
     return;
 end
-
+fclose(fid);
 cd(old);
