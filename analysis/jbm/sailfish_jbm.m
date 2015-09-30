@@ -38,7 +38,6 @@ for i = 1 : length(d.Var1)
     
     fprintf(fid, '%s\n', bcmd);
 
-    return;
 end
 fclose(fid);
 cd(old);
