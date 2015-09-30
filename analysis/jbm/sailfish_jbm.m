@@ -24,10 +24,16 @@ for i = 1 : length(d.Var1)
     %mkdir(outdir);
     cmd = sprintf('sailfish quant -i %s -l ''T=SE:S=U'' -r %s -o %s -p 6 &> %s', ...
         '/proj/dangl_lab/sbiswas/sailfish_indexes/tair10', fnamefasta, outdir, [outdir, '/sf.out']);
-    bcmd = sprintf('bsub -q day -M 30 -o %s -e %s -n 6 -R "span[hosts=1]" %s', ...
+    bcmd = sprintf('bsub -q day -M 30 -o %s -e %s -n 6 -R "span[hosts=1]" "%s"', ...
         [outdir, '/lsf.out'], [outdir, '/lsf.err'], cmd);
     fprintf('%s\n', bcmd);
     %system(cmd);
+    
+    cmd = sprintf('mv %s %s', fnamefasta, outdir);
+    fprintf('%s\n', ccmd);
+    %system(cmd);
+    
+    return;
 end
 
 cd(old);
