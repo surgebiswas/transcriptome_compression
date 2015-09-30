@@ -17,21 +17,24 @@ for i = 1 : length(d.Var1)
     fprintf('%s\n', cmd);
     system(cmd);
     
-    
-    % Sailfish
+    % Make and move file to output directory.
     splits = regexpi(fname, '_', 'split');
     outdir = [splits{1}, '_', splits{2}];
     mkdir(outdir);
+    cmd = sprintf('mv %s %s', fnamefasta, outdir);
+    fprintf('%s\n', cmd);
+    system(cmd);
+    
+    
+    % Sailfish
     cmd = sprintf('sailfish quant -i %s -l ''T=SE:S=U'' -r %s -o %s -p 6 &> %s', ...
-        '/proj/dangl_lab/sbiswas/sailfish_indexes/tair10', fnamefasta, outdir, [outdir, '/sf.out']);
+        '/proj/dangl_lab/sbiswas/sailfish_indexes/tair10', [outdir, '/', fnamefasta], outdir, [outdir, '/sf.out']);
     bcmd = sprintf('bsub -q day -M 30 -o %s -e %s -n 6 -R "span[hosts=1]" "%s"', ...
         [outdir, '/lsf.out'], [outdir, '/lsf.err'], cmd);
     fprintf('%s\n', bcmd);
     system(cmd);
     
-    cmd = sprintf('mv %s %s', fnamefasta, outdir);
-    fprintf('%s\n', cmd);
-    system(cmd);
+    
     
     return;
 end
