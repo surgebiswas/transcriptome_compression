@@ -3,12 +3,12 @@ rng('default');
 
 % Initialize environment
 [~,hn] = unix('hostname'); % Get hostname.
-if ~isempty(strfind(hn, '.local'))
-    % We are working locally
-    homedir = '/Users/sbiswas';
-elseif ~isempty(strfind(hn, '.kd.unc.edu'))
+if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
+else 
+    % We are working locally
+    homedir = '/Users/sbiswas';
 end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Athaliana/'];

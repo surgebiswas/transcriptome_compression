@@ -1,5 +1,9 @@
-function [Y, sids, tids] = quality_filter( s, organism )
+function [Y, sids, tids] = quality_filter( s, organism, varargin )
 %
+
+genplot = setParam(varargin, 'genplot', false);
+reportFile = [organism, '_quality_filter_summary_data.mat'];
+
 
 Y = s.tpm; 
 sids = s.ids;
@@ -14,11 +18,18 @@ if strcmpi(organism, 'Athaliana')
     CORRCUTOFF = 0.45; % 0.7
     NZCUTOFF = 0.2; % 0.35
     TPMCUTOFF = 1;
+elseif strcmpi(organism, 'Mmusculus')
+    RCTHRESH = 4e6;
+    MRTHRESH = 0.70;
+    CORRCUTOFF = 0.45; % 0.7
+    NZCUTOFF = 0.2; % 0.35
+    TPMCUTOFF = 1;
 end
 
 %% SAMPLE FILTERING
 % 1. Depth and Mapped depth filter
-[Y,sids] = filter_by_depth_and_mapping_rate(Y, sids, depth, mapped_ratio, true);
+[Y,sids] = filter_by_depth_and_mapping_rate(Y, sids, depth, mapped_ratio, genplot);
+return;
 
 % 2. Collapse to a gene table. 
 if strcmpi(organism, 'Athaliana')
@@ -57,7 +68,7 @@ end
 
 % 5. Correlation filtering and filtering based on number of non-zero protein
 % coding or lncRNA features.
-[Y,sids] = filter_by_corr_and_nz(Y, sids, CORRCUTOFF, NZCUTOFF, true);
+[Y,sids] = filter_by_corr_and_nz(Y, sids, CORRCUTOFF, NZCUTOFF, genplot);
 
 
 
@@ -78,7 +89,6 @@ end
         y = y(k,:);
         tids = tids(k);
     end
-    
     
     function [y, sids] = filter_by_corr_and_nz(y,sids, corr_cutoff, nz_cutoff, genplot)
         lY = log10(y' + 0.1);
@@ -101,7 +111,7 @@ end
             plotSave('figures/quality_filter/corr_with_other_samples_vs_nz_prop.png');
             close;
         end
-        
+        save(reportFile, 'z', 'q', '-append');
         
         k = q' > corr_cutoff & z < nz_cutoff;
         y = y(:,k);
@@ -129,6 +139,8 @@ end
             plotSave('figures/quality_filter/mapped_pct_vs_depth.png');
             close;
         end
+        save(reportFile, 'd', 'mr', '-append');
+        
         
         torm = d < RCTHRESH & mr < MRTHRESH;
         y(:, torm) = [];
