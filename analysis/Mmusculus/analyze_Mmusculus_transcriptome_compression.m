@@ -53,7 +53,7 @@ end
 
 
 % Pre-process, quality filter, and quality check the data.
-if false
+if true
     load('NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015.mat');
     [Y,sids,tids] = quality_filter(s, 'Mmusculus');
     
