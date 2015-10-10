@@ -3,6 +3,8 @@ function [Y, sids, tids] = quality_filter( s, organism, varargin )
 
 genplot = setParam(varargin, 'genplot', false);
 reportFile = [organism, '_quality_filter_summary_data.mat'];
+reportDesc = ['Report for quality_filter.m run on ', organism, '. '];
+save(reportFile, 'reportDesc');
 
 
 Y = s.tpm; 
@@ -111,7 +113,8 @@ end
             plotSave('figures/quality_filter/corr_with_other_samples_vs_nz_prop.png');
             close;
         end
-        save(reportFile, 'z', 'q', '-append');
+        reportDesc = [reportDesc, 'z = Proportion of zero expressed genes per sample. q = Average correlation to other samples. '];
+        save(reportFile, 'z', 'q', 'reportDesc', '-append');
         
         k = q' > corr_cutoff & z < nz_cutoff;
         y = y(:,k);
@@ -139,7 +142,8 @@ end
             plotSave('figures/quality_filter/mapped_pct_vs_depth.png');
             close;
         end
-        save(reportFile, 'd', 'mr', '-append');
+        reportDesc = [reportDesc, 'd = depth, mr = mapping rate. '];
+        save(reportFile, 'd', 'mr', 'reportDesc', '-append');
         
         
         torm = d < RCTHRESH & mr < MRTHRESH;
