@@ -3,12 +3,12 @@ rng('default');
 
 % Initialize environment
 [~,hn] = unix('hostname'); % Get hostname.
-if ~isempty(strfind(hn, '.local'))
-    % We are working locally
-    homedir = '/Users/sbiswas';
-elseif ~isempty(strfind(hn, '.kd.unc.edu'))
+if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
+else 
+    % We are working locally
+    homedir = '/Users/sbiswas';
 end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Mmusculus/'];
@@ -20,7 +20,7 @@ qtfile = 'Mmusculus_query_table_04June2015_.csv';
 mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
 
 % Construction full collection of raw transcriptomes.
-if true
+if false
     load('assembled_srafish_output/NCBI_SRA_Mmusculus_download_04June2015_prelim.mat');
     s1 = s;
     
@@ -54,8 +54,10 @@ end
 
 % Pre-process, quality filter, and quality check the data.
 if false
-    load NCBI_SRA_Mmusculus_download_04June2015_prelim.mat
-    NCBI_SRA_Mmusculus_preprocess(s,qt,mainDataFile);
+    load('NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015.mat');
+    [Y,sids,tids] = quality_filter(s, 'Mmusculus');
+    
+    
     return;
 end
 
