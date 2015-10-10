@@ -31,15 +31,14 @@ end
 %% SAMPLE FILTERING
 % 1. Depth and Mapped depth filter
 [Y,sids] = filter_by_depth_and_mapping_rate(Y, sids, depth, mapped_ratio, genplot);
-return;
+fprintf('After mapped pct/depth threshold: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
 
 % 2. Collapse to a gene table. 
 if strcmpi(organism, 'Athaliana')
-      Yd = collapse_Athaliana_isoform_table(mat2dataset(Y, 'ObsNames', tids, 'VarNames', sids));
-end
-
-% 3. Keep only nuclear protein coding genes.
-if strcmpi(organism, 'Athaliana')
+    % 2.a.
+    Yd = collapse_Athaliana_isoform_table(mat2dataset(Y, 'ObsNames', tids, 'VarNames', sids));
+    
+    % 2.b. Keep only nuclear protein coding genes.
     dk = dataset('file','At_nuclear_protein_coding.txt', ...
         'ReadObsNames', false, 'ReadVarNames', false);
     
@@ -55,22 +54,33 @@ if strcmpi(organism, 'Athaliana')
     Y_npc = double(Yd_npc);
     tids = get(Yd, 'ObsNames');
     sids = get(Yd, 'VarNames');
-end
-
-if strcmpi(organism, 'Athaliana')
-    % 4. Remove samples with non-protein coding contamination
+    
+    % 2.c. Remove samples with non-protein coding contamination
     rmmask = remove_samples_with_non_prot_coding_contamination(Y, Y_npc, sids);
     Y(:,rmmask) = [];
     sids(rmmask) = [];
     
+elseif strcmpi(organism, 'Mmusculus');
+    [tids, Y] = collapse_mouse_isoform_table(tids, Y);
+    
 end
+fprintf('After collapsing isoform table: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
+
+coov = std(Y,0,2)./mean(Y,2);
+save(reportFile, 'coov', '-append');
+
+
 
 % 4. Expression filtering
 [Y,tids] = expression_filter(Y, tids, TPMCUTOFF);
+fprintf('After Expression filtering: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
+
 
 % 5. Correlation filtering and filtering based on number of non-zero protein
 % coding or lncRNA features.
 [Y,sids] = filter_by_corr_and_nz(Y, sids, CORRCUTOFF, NZCUTOFF, genplot);
+fprintf('After correlation filtering: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
+
 
 
 
