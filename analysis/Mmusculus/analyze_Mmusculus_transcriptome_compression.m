@@ -16,8 +16,8 @@ path(genpath([homedir, '/GitHub/', repo]), path);
 cd(datadir);
 
 % General variables
-qtfile = 'Mmusculus_query_table_04June2015_.csv';
-mainDataFile = 'NCBI_SRA_Mmusculus_download_04June2015_prelim_processed.mat';
+qtfile = 'Mmusculus_query_table_19Sept2015.csv';
+mainDataFile = 'NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015_quality_filtered.mat';
 
 % Construction full collection of raw transcriptomes.
 if false
@@ -54,9 +54,32 @@ end
 
 % Pre-process, quality filter, and quality check the data.
 if true
-    load('NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015.mat');
-    [Y,sids,tids] = quality_filter(s, 'Mmusculus');
+    qfparams.MRTHRESH = 0.7;
+    qfparams.RCTHRESH = 4e6;
+    qfparams.CORRCUTOFF = 0.55;
+    qfparams.NZCUTOFF = 0.3; 
+    qfparams.TPMCUTOFF = 1;
     
+    if true
+        load('NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015.mat');
+        [Y,sids,tids] = quality_filter(s, qfparams, 'Mmusculus');
+    end
+    
+    if false
+        plot_quality_filter_report('Mmusculus_quality_filter_summary_data.mat', qfparams, 'Mmusculus');
+    end
+    
+    % Prepare the query table
+    qt_full = read_ncbi_sra_query_table(qtfile);
+    
+    % Some entries from the SRA have been removed before we updated
+    % the query table. Remove these samples from analysis.
+    k = steq(sids, get(qt_full, 'ObsNames'));
+    Y = Y(:,k);
+    sids = sids(k);
+    
+    qt = qt_full(sids,:);
+    save(mainDataFile, 'Y', 'tids', 'sids', 'qt');
     
     return;
 end

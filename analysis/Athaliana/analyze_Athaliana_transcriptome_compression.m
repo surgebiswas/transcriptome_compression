@@ -17,7 +17,7 @@ cd(datadir);
 
 %mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed.mat';
 mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_06Sept2015_quality_filtered.mat';
-queryTable = 'Athaliana_query_table_18May2015_shuffled_.csv';
+queryTable = 'Athaliana_query_table_06Sept2015.csv';
 
 % Update raw (unquality filtered) collection of transcriptomes.
 if false
@@ -59,13 +59,25 @@ end
 % Isoform collapsing to genes
 % Keeping of nuclear protein coding genes.
 % Check TPM profiles
-if false; 
-    %NCBI_SRA_Athaliana_preprocess(mainDataFile, queryTable); 
-    load('NCBI_SRA_Athaliana_full_data_up_to_06Sept2015.mat');
-    [Y, sids, tids] = quality_filter(sjoin, 'Athaliana');
+if true; 
+    qfparams.MRTHRESH = 0.75;
+    qfparams.RCTHRESH = 4e6;
+    qfparams.CORRCUTOFF = 0.45;
+    qfparams.NZCUTOFF = 0.2; 
+    qfparams.TPMCUTOFF = 1;
+    
+    if true
+        load('NCBI_SRA_Athaliana_full_data_up_to_06Sept2015.mat');
+        [Y, sids, tids] = quality_filter(sjoin, qfparams, 'Athaliana');
+    end
+    
+    if false
+        plot_quality_filter_report('Athaliana_quality_filter_summary_data.mat', qfparams, 'Athaliana');
+    end
+
     
     % Prepare the query table
-    qt_full = read_ncbi_sra_query_table('Athaliana_query_table_06Sept2015.csv');
+    qt_full = read_ncbi_sra_query_table(queryTable);
     
     % Some entries from the SRA have been removed before we updated
     % the query table. Remove these samples from analysis.
@@ -204,7 +216,7 @@ end
 
 % Test of residual subsampling. 
 % Compare to result of compressing full data.
-if true
+if false
     punexp = 0;
     maxfeats = 100;
     subsampleto = [0.01 0.05 0.1];

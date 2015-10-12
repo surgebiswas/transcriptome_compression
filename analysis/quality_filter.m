@@ -1,4 +1,4 @@
-function [Y, sids, tids] = quality_filter( s, organism, varargin )
+function [Y, sids, tids] = quality_filter( s, qfparams, organism, varargin )
 %
 
 genplot = setParam(varargin, 'genplot', false);
@@ -14,19 +14,26 @@ depth = s.depth;
 mapped_ratio = s.mapped_ratio;
 
 
-if strcmpi(organism, 'Athaliana')
-    RCTHRESH = 4e6;
-    MRTHRESH = 0.75;
-    CORRCUTOFF = 0.45; % 0.7
-    NZCUTOFF = 0.2; % 0.35
-    TPMCUTOFF = 1;
-elseif strcmpi(organism, 'Mmusculus')
-    RCTHRESH = 4e6;
-    MRTHRESH = 0.70;
-    CORRCUTOFF = 0.45; % 0.7
-    NZCUTOFF = 0.2; % 0.35
-    TPMCUTOFF = 1;
-end
+% if strcmpi(organism, 'Athaliana')
+%     RCTHRESH = 4e6;
+%     MRTHRESH = 0.75;
+%     CORRCUTOFF = 0.45; % 0.7
+%     NZCUTOFF = 0.2; % 0.35
+%     TPMCUTOFF = 1;
+% elseif strcmpi(organism, 'Mmusculus')
+%     RCTHRESH = qfparams.RCTHRESH;
+%     MRTHRESH = qfparams.MRTHRESH;
+%     CORRCUTOFF = qfparams.CORRCUTOFF; % 0.7
+%     NZCUTOFF = qfparams.NZCUTOFF; % 0.35
+%     TPMCUTOFF = qfparams.TPMCUTOFF;
+% end
+
+RCTHRESH = qfparams.RCTHRESH;
+MRTHRESH = qfparams.MRTHRESH;
+CORRCUTOFF = qfparams.CORRCUTOFF; % 0.7
+NZCUTOFF = qfparams.NZCUTOFF; % 0.35
+TPMCUTOFF = qfparams.TPMCUTOFF;
+
 
 %% SAMPLE FILTERING
 % 1. Depth and Mapped depth filter
@@ -66,11 +73,6 @@ elseif strcmpi(organism, 'Mmusculus');
 end
 fprintf('After collapsing isoform table: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
 
-coov = std(Y,0,2)./mean(Y,2);
-save(reportFile, 'coov', '-append');
-
-
-
 % 4. Expression filtering
 [Y,tids] = expression_filter(Y, tids, TPMCUTOFF);
 fprintf('After Expression filtering: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
@@ -82,6 +84,10 @@ fprintf('After Expression filtering: Num. samples = %0.0f, Num. features = %0.0f
 fprintf('After correlation filtering: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));
 
 
+% 6. Coefficient of variation for all genes to ensure that everything is
+% relatively perturbed.
+coov = std(Y,0,2)./mean(Y,2);
+save(reportFile, 'coov', '-append');
 
 
 
