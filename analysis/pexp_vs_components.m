@@ -47,7 +47,8 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
     
     
     
-    if true
+    if exist(sprintf('NCBI_SRA_%s_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat', organism), 'file')
+        
         load(sprintf('NCBI_SRA_%s_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat', organism));
         hold on
         h(3) = plot(100 - 100*somp.punexp, '-g', 'LineWidth', 3);

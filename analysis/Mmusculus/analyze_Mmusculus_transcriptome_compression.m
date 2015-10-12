@@ -53,7 +53,7 @@ end
 
 
 % Pre-process, quality filter, and quality check the data.
-if true
+if false
     qfparams.MRTHRESH = 0.7;
     qfparams.RCTHRESH = 4e6;
     qfparams.CORRCUTOFF = 0.55;
@@ -99,8 +99,7 @@ if false
 end
 
 % PCA. Percent variation explained vs. eigengene.
-if false;
-    load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
+if true;
     [coef, pexp] = pexp_vs_components(lY, 'Mmusculus'); 
 end
 
