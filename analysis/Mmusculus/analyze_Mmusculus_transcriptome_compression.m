@@ -79,7 +79,7 @@ if true
     sids = sids(k);
     
     qt = qt_full(sids,:);
-    save(mainDataFile, 'Y', 'tids', 'sids', 'qt');
+    save(mainDataFile, 'Y', 'tids', 'sids', 'qt', '-v7.3');
     
     return;
 end
