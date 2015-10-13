@@ -15,18 +15,16 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
         
         disp('Computing for null model');
         [~, ~, ~,~, pexp_null] = pca(sYnull, 'NumComponents', NUMCOMPONENTS);
+        s = sY*coef;
         save(sprintf('NCBI_SRA_%s_PCA_pexp_vs_eigengene_params.mat', organism), 'coef', 'pexp', 'pexp_null');
+        return
     else
         load(sprintf('NCBI_SRA_%s_PCA_pexp_vs_eigengene_params.mat', organism));
     end 
     cp = cumsum(pexp);
     cp_null = cumsum(pexp_null);
     
-    if true
-        s = sY*coef;
-        save(sprintf('NCBI_SRA_%s_PCA_pexp_vs_eigengene_params.mat', organism), 's', '-append');
-    end
-    
+ 
     % Copied from A. thaliana code.
     figure;
     h(1) = semilogx(cp(1:NUMCOMPONENTS), '-k', 'LineWidth', 3);
