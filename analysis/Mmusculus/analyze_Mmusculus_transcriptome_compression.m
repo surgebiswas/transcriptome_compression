@@ -224,6 +224,7 @@ end
 
 t = toc;
 if completiontext
+    fprintf('Sending text.\n');
     msg = sprintf('Job took %0.2f seconds.\n... you''re awesome.', t);
     send_text_message('919-757-1609', 'AT&T', 'Job Finished', msg)
 end
