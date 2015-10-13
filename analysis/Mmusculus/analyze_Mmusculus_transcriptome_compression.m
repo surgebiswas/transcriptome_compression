@@ -85,8 +85,8 @@ if false
 end
 
 load(mainDataFile);
-qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
-qt = qt(sids,:);
+% qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
+% qt = qt(sids,:);
 
 lY = log10(Y' + 0.1);
 
