@@ -2,10 +2,12 @@ clear;
 rng('default');
 
 % Initialize environment
+completiontext = false;
 [~,hn] = unix('hostname'); % Get hostname.
 if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
+    completiontext = true;
 else 
     % We are working locally
     homedir = '/Users/sbiswas';
@@ -14,6 +16,7 @@ repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Mmusculus/'];
 path(genpath([homedir, '/GitHub/', repo]), path);
 cd(datadir);
+tic;
 
 % General variables
 qtfile = 'Mmusculus_query_table_19Sept2015.csv';
@@ -218,3 +221,10 @@ if false
 %     end
     
 end
+
+t = toc;
+if completiontext
+    msg = sprintf('Job took %0.2f seconds.\n... you''re awesome.', t);
+    send_text_message('919-757-1609', 'AT&T', 'Job Finished', msg)
+end
+

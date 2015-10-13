@@ -2,10 +2,12 @@ clear;
 rng('default');
 
 % Initialize environment
+completiontext = false;
 [~,hn] = unix('hostname'); % Get hostname.
 if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
+    completiontext = true;
 else 
     % We are working locally
     homedir = '/Users/sbiswas';
@@ -14,6 +16,7 @@ repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Athaliana/'];
 path(genpath([homedir, '/GitHub/', repo]), path);
 cd(datadir);
+tic;
 
 %mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_18May2015_processed.mat';
 mainDataFile = 'NCBI_SRA_Athaliana_full_data_up_to_06Sept2015_quality_filtered.mat';
@@ -519,4 +522,12 @@ if false
 
 
     end
+end
+
+
+
+t = toc;
+if completiontext
+    msg = sprintf('Job took %0.2f seconds.\n... you''re awesome.', t);
+    send_text_message('919-757-1609', 'AT&T', 'Job Finished', msg)
 end
