@@ -9,7 +9,7 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
         sYnull(:,i) = sY(randperm(size(sY,1)),i);
     end
     
-    if true
+    if false
         disp('Computing for full model');
         [coef, ~, ~, ~, pexp] = pca(sY, 'NumComponents', NUMCOMPONENTS);
         
@@ -21,6 +21,11 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
     end 
     cp = cumsum(pexp);
     cp_null = cumsum(pexp_null);
+    
+    if true
+        s = lY*coef;
+        save(sprintf('NCBI_SRA_%s_PCA_pexp_vs_eigengene_params.mat', organism), 's', '-append');
+    end
     
     % Copied from A. thaliana code.
     figure;
