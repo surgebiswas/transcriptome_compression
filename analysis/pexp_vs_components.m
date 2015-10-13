@@ -23,7 +23,7 @@ function [ coef, pexp ] = pexp_vs_components( sY, organism )
     cp_null = cumsum(pexp_null);
     
     if true
-        s = lY*coef;
+        s = sY*coef;
         save(sprintf('NCBI_SRA_%s_PCA_pexp_vs_eigengene_params.mat', organism), 's', '-append');
     end
     
