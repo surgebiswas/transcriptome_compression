@@ -62,7 +62,7 @@ end
 % Isoform collapsing to genes
 % Keeping of nuclear protein coding genes.
 % Check TPM profiles
-if true; 
+if false; 
     qfparams.MRTHRESH = 0.75;
     qfparams.RCTHRESH = 4e6;
     qfparams.CORRCUTOFF = 0.45;
