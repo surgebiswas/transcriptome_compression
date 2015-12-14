@@ -15,9 +15,15 @@ while any(t(:,2) < nmin)
     means = cell(C,1);
     covs = cell(C,1);
     for i = 1 : C
-        rew = mcdcov(x(c == i,:), 'plots', 0);
-        means{i} = rew.center;
-        covs{i} = rew.cov;
+        
+        if i == pci
+            means{i} = zeros(1,size(x,2));
+            covs{i} = eye(size(x,2));
+        else
+            rew = mcdcov(x(c == i,:), 'plots', 0);
+            means{i} = rew.center;
+            covs{i} = rew.cov;
+        end
     end
     
     % Re-assign each point in the 'pci' cluster.

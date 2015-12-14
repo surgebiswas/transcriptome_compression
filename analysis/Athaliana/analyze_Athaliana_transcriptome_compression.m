@@ -11,6 +11,7 @@ if ~isempty(strfind(hn, '.kd.unc.edu'))
 else 
     % We are working locally
     homedir = '/Users/sbiswas';
+    completiontext = true;
 end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Athaliana/'];
@@ -165,6 +166,21 @@ if false
     model = tratrain(lY, lY(:, somp.S(1:NMARKERS)));
     model.reconstruction = lY(:, somp.S(1:NMARKERS))*model.b + repmat(model.b0,size(lY,1),1);
     save(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'], 'model')
+end
+
+
+% Preliminary investigation into compression ensembles.
+if true
+    rng('default');
+    [ytrain, ytest, trainind] = partition_data(lY, qt, 0.1);
+    compression_ensemble_train(ytrain, 'saveFile', 'NCBI_SRA_Athaliana_compression_ensemble_test.mat');
+    
+    if true
+        % Let's compare this to a 500 marker global decomposition.
+        rng('default');
+        gl_stats = marker_OMP(standardize(ytrain), 0, 'maxfeatures', 500, 'subresidual', 0.01);
+        save('NCBI_SRA_Athaliana_compression_ensemble_test.mat', 'gl_stats', '-append');
+    end
 end
 
 
