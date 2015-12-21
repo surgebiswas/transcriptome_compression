@@ -109,7 +109,7 @@ function [ perfstats ] = evaluate_tradiction( ytrue, yhat, varargin )
         pctrnd = round(pct*100)/100;
         
         set(gca, 'XTick', [0 0.25 pctrnd 1]);
-        rotateXLabels(gca, 45);
+%        rotateXLabels(gca, 45);
         set(gca, 'FontSize', sf.axis_tick_labels);
         xlabel('PCC', 'FontSize', sf.axis_labels);
         ylabel('Num. genes', 'FontSize', sf.axis_labels);

@@ -5,10 +5,11 @@ function evaluate_prospective_performance( lY, qt, saveFile )
 
 
 % CONSTANTS/PARAMETERS
-params.SAVEMEMORY = true;
+params.SAVEMEMORY = false;
 params.TESTPROP = 0.1; % Proportion of submissions that should be kept in the test set.
 params.PROPUNEXPVAR = 0;
 params.MAXFEATS = 500;
+params.SUBRESIDUAL = 0.01;
 
 % 1. Split the data into training and test sets.
 [ytrain, ytest, trainind] = partition_data(lY, qt, params.TESTPROP);
@@ -43,7 +44,7 @@ end
 if decompositionNeeded 
     fprintf('Performing OMP decomposition ... ');
     somp = marker_OMP(standardize(ytrain), params.PROPUNEXPVAR, 'maxfeatures', params.MAXFEATS, ...
-        'savememory', params.SAVEMEMORY);
+        'savememory', params.SAVEMEMORY, 'subresidual', params.SUBRESIDUAL);
     save(saveFile, 'somp', 'params');
     fprintf('Done.\n');
 else
