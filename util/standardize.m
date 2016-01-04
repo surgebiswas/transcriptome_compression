@@ -2,24 +2,12 @@ function [ xs, mu, sig] = standardize( x, varargin)
 % z-score transformation of x colum wise
 
 centeronly = setParam(varargin, 'centeronly', false);
+mu = setParam(varargin, 'mu', mean(x));
+sig = setParam(varargin, 'std', std(x));
 
-xs = x;
-mu = zeros(1, size(xs,2));
-sig = mu;
-for i = 1 : size(xs,2)
-    mu(i) = mean(xs(:,i));
-    sig(i) = std(xs(:,i));
-    
-    if sig(i) == 0
-        sig(i) = 1e-10;
-    end
-    
-    if centeronly
-        xs(:,i) = xs(:,i) - mean(xs(:,i));
-    else
-        xs(:,i) = (xs(:,i) - mean(xs(:,i)))/sig(i);
-    end
-    
+xs = bsxfun(@minus, x, mu);
+if ~centeronly
+    xs = bsxfun(@rdivide, xs, sig);
 end
 
 end

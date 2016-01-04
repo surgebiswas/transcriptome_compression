@@ -11,7 +11,7 @@ if ~isempty(strfind(hn, '.kd.unc.edu'))
 else 
     % We are working locally
     homedir = '/Users/sbiswas';
-    completiontext = true;
+    completiontext = false;
 end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Athaliana/'];
@@ -171,7 +171,7 @@ end
 
 
 % Preliminary investigation into compression ensembles.
-if true
+if false
     rng('default');
     [ytrain, ytest, trainind] = partition_data(lY, qt, 0.1);
     
