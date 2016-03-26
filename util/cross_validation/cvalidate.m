@@ -41,6 +41,7 @@ function [ cvperf_mean, cvperf_se, cvperf ] = cvalidate( x, y, trainfun, predfun
 % cvperf_se: Standard error of the performance across all folds.
 % cvperf: Cross validation performance for each fold. 
 
+DEBUG_VERBOSE = true;
 
 cvi = setParam(varargin, 'crossvalind', crossvalind('Kfold', size(x,1), 10));
 params = setParam(varargin, 'training_params', []);
@@ -59,6 +60,10 @@ for i = 1 : length(cvperf)
     yhat = predfun(xtest,model);
     
     cvperf(i) = lossfun(ytest,yhat);
+    
+    if DEBUG_VERBOSE
+        fprintf('[%s] CV index: %0.0f\n', mfilename, i);
+    end
 end
 
 cvperf_mean = mean(cvperf);

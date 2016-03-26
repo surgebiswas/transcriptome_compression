@@ -152,9 +152,11 @@ end
 % Marker OMP decomposition on FULL data
 % Run on $pw
 if false 
+    % Last run Mar 2, 2016.
+    rng('default');
     punexp = 0;
     maxfeats = 500;
-    somp = marker_OMP(standardize(lY), punexp, 'savememory', false, 'maxfeatures', maxfeats);
+    somp = marker_OMP(standardize(lY), punexp, 'savememory', false, 'maxfeatures', maxfeats, 'subresidual', 0.1);
     save(sprintf('NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_%0.2f_maxfeats_%0.0f.mat', punexp, maxfeats), 'somp');
 end
 
@@ -168,6 +170,68 @@ if false
     save(['NCBI_SRA_Athaliana_compression_and_reconstruction_nmarkers_', num2str(NMARKERS), '.mat'], 'model')
 end
 
+
+% Preliminary investigation into locally weighted regression
+if false
+    load NCBI_SRA_Athaliana_marker_OMP_decomposition_punexp_0.00_maxfeats_500.mat;
+    nmarkers = 1;
+    markers = somp.S(1:nmarkers);
+    method = 'ridgefit';
+    
+    % Loss function
+    trimmean_percent = 10;
+    lf = @(ytest,yhat) trimmean(abs((ytest(:) - yhat(:))./ytest(:)), ...
+        trimmean_percent, 'round', 1); % Robust relative error.
+    
+    % Cross validation indices.
+    % Group by submission.
+    nfolds = 10; %length(unique(qt.Submission));
+    cvi = kfoldcrossvalindbygroup(nfolds, qt.Submission);
+    
+    % Representative residual indices.
+    rng('default');
+    rep_residual = randsample(size(lY,2), round(0.05*size(lY,2)));
+    
+    if strcmpi(method, 'kernelfit')
+        % Kernel fit train parameters
+        params_tune{1}{1} = @gaussian_kernel_diagonal; % Kernel
+        %params_tune{2} = ([0.1:0.02:0.5]')*sqrt(nmarkers); % loc avg; scale by the dimension of the query space
+        params_tune{2} = 2.3*sqrt(nmarkers); % loc reg;
+        params_tune{3} = true; % train standardized?
+        params_tune{4} = true; % predict original?
+        params_tune{5}{1} = 'local_regression'; % ['local_average' | 'local_regression'];
+
+        trainfun = @kernelfit_train;
+        predfun = @kernelfit_predict;
+    end
+    if strcmpi(method, 'ridgefit')
+        params_tune{1} = [0, logspace(-6,-2,19)]';
+        params_tune{2} = true;
+        
+        % Precompute x'*x and x'*y
+        params_tune{3}{1} = ridgefit_precompute;
+        params_tune{3}{1}.itr = 1;
+        params_tune{3}{1}.precompute = cell(nfolds,2);
+        for i = 1 : nfolds
+            x = lY(cvi~=i,markers); x = [ones(size(x,1),1),x];
+            y = lY(cvi~=i,rep_residual);
+            
+            params_tune{3}{1}.precompute{i,1} =x'*x;
+            params_tune{3}{1}.precompute{i,2} =x'*y;
+        end
+        
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+    end
+    
+    
+    %profile on;
+    cvs = cvalidate_tune(lY(:,markers), lY(:,rep_residual), trainfun, ...
+        predfun, params_tune, 'crossvalind', cvi, 'loss_fun', lf);
+    %profile off;
+    
+    %profile viewer
+end
 
 
 % Preliminary investigation into compression ensembles.
@@ -206,8 +270,20 @@ if false
     sf = get_standard_figure_font_sizes;
     set(gca, 'FontSize', sf.axis_tick_labels);
     plotSave('figures/heatmap_original_vs_reconstruction/insample_density_plot.png');
+    close
 end
 
+% Gene set analysis.
+if true
+    load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
+    load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
+
+    [sY, train_mu, train_sig] = standardize(lY);
+    [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
+    
+    save('NCBI_SRA_Athaliana_gene_set_PC_coefs.mat', 'ngenes', 'engenes', 'pexp', 'gscoef', 'train_mu', 'train_sig');
+    
+end
 
 %%% PROSPECTIVE PERFORMANCE
 % Train on 90% of data (cutoff determined by date)

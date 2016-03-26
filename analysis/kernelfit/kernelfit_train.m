@@ -21,6 +21,8 @@ function [ model ] = kernelfit_train( x, y, params )
 %   
 %   - params{4} Predict in the original scale? [true | false]  
 % 
+%   - params{5} Method/model type ['local_average' | 'local_regression']
+% 
 % Note: Written to be used with cvalidate.m and cvalidate_tune.m
 
 
@@ -28,6 +30,7 @@ model.K = params{1}; % Kernel
 model.lambda = params{2}; % Kernel width. 
 model.train_standardized = params{3}; % train on a standardized model?
 model.predict_original = params{4}; % make predictions in original scale? 
+model.method = params{5}; % method ['local_average' | 'local_regression']
 
 if model.train_standardized
     [model.x, model.x_mu, model.x_sig] = standardize(x); 

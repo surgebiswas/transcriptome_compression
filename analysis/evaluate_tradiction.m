@@ -116,48 +116,9 @@ function [ perfstats ] = evaluate_tradiction( ytrue, yhat, varargin )
     end
     
     
-    function f = pred_v_actual_density_plot(ytrue, yhat)
-        % Standardize first so that all genes can be plotted in the same
-        % scale.
-        ycat = standardize([ytrue; yhat]);
-        
-        ytrues = ycat(1:size(ytrue,1),:);
-        ycat(1:size(ytrue,1),:) = [];
-        yhats = ycat;
-        
-        
-        ytrue_lin = reshape(ytrues, size(ytrues,1)*size(ytrues,2), 1);
-        yhat_lin = reshape(yhats, size(yhats,1)*size(yhats,2), 1);
-        avgPCC = corr(ytrue_lin, yhat_lin);
-        [~,density,X,Y]=kde2d([yhat_lin, ytrue_lin]);
-        
-        f = figure;
-        sf = get_standard_figure_font_sizes;
-        [hc, hc] = contourf(X,Y,density,100);
-        set(hc, 'LineStyle', 'none')
-        axis([-3 3 -3 3])
-        axis square;
-        colormap(prgn); % cbrewer('seq', 'Purples', 100, 'cubic') 
-        xlabel('Predicted expression', 'FontSize', sf.axis_labels);
-        ylabel('Actual expression', 'FontSize', sf.axis_labels);
-        set(gca, 'FontSize', sf.axis_tick_labels);
-        
-        txt = text(-2.8, 2.5, sprintf('Avg. PCC = %0.2f', avgPCC));
-        set(txt, 'FontSize', sf.axis_tick_labels);
-        set(txt, 'Color', 'w');
-        
-    end
-    
+   
 
-    function [rsq] = rsq_and_slope(ytrue, yhat)
-        rsq = zeros(1, size(ytrue,2));
-       % sl = rsq;
-        for i = 1 : length(rsq)
-            rsq(i) = corr(yhat(:,i), ytrue(:,i));
-%             c = pca([ytrue(:,i), yhat(:,i)]);
-%             sl(i) = c(2,1)/c(1,1);
-        end
-    end
+    
 
 end
 

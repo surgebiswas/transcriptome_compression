@@ -37,7 +37,7 @@ end
 % Model reconstruction is in log scale
 sY_reconstructed = standardize(10.^(model.reconstruction) - 0.1); % undoes log10(x + 0.1), and then standardizes.
 
-if false
+if true
     figure;
     imagesc(sY_reconstructed(ri,ci), [-DISPLAYRANGE DISPLAYRANGE]);colormap(prgn); % accidentally flipped ri and ci.
     set(gca, 'XTick', []);

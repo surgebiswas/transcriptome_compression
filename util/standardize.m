@@ -10,5 +10,8 @@ if ~centeronly
     xs = bsxfun(@rdivide, xs, sig);
 end
 
+q = any(isnan(xs));
+xs(:,q) = 0; 
+
 end
 

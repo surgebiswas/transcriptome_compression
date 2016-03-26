@@ -6,20 +6,18 @@ end
 
 
 yhat = zeros(size(x0,1), size(model.y,2));
+x = model.x;
+y = model.y;
 for i = 1 : size(x0,1)
-    x = model.x;
-    y = model.y;
-    
     w = model.K(x(:,2:end), x0(i,:), model.lambda);
-%     mask = w < 0; %1e-4;
-%     
-%     x(mask,:) = [];
-%     y(mask,:) = [];
-%     w(mask) = [];
 
-    xtw = bsxfun(@times, x, w)';
-
-    yhat(i,:) = [1 x0(i,:)]*( xtw*x \ xtw*y );
+    if strcmpi(model.method, 'local_regression');
+        xtw = bsxfun(@times, x, w)';
+        yhat(i,:) = [1 x0(i,:)]*( xtw*x \ xtw*y );
+    elseif strcmpi(model.method, 'local_average');
+         w = w/sum(w);
+         yhat(i,:) = w'*y;
+    end
 end
 
 % Return to original scale if requested.
