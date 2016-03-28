@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/64/trunk/RF_Class_C/src
+END
+rf.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/10/trunk/RF_Class_C/src/rf.h
+END
+classRF.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/49/trunk/RF_Class_C/src/classRF.cpp
+END
+cokus_test.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/2/trunk/RF_Class_C/src/cokus_test.cpp
+END
+cokus.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/2/trunk/RF_Class_C/src/cokus.cpp
+END
+rfsub.f
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/2/trunk/RF_Class_C/src/rfsub.f
+END
+classTree.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/45/trunk/RF_Class_C/src/classTree.cpp
+END
+mex_ClassificationRF_predict.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/64/trunk/RF_Class_C/src/mex_ClassificationRF_predict.cpp
+END
+twonorm_C_wrapper.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/44/trunk/RF_Class_C/src/twonorm_C_wrapper.cpp
+END
+rfutils.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/56/trunk/RF_Class_C/src/rfutils.cpp
+END
+qsort.c
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/2/trunk/RF_Class_C/src/qsort.c
+END
+mex_ClassificationRF_train.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/64/trunk/RF_Class_C/src/mex_ClassificationRF_train.cpp
+END

@@ -276,12 +276,16 @@ end
 % Gene set analysis.
 if true
     load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
-    load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
-
-    [sY, train_mu, train_sig] = standardize(lY);
-    [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
+%     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
+%     [sY, train_mu, train_sig] = standardize(lY);
+%     [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
+%     save('NCBI_SRA_Athaliana_gene_set_PC_coefs.mat', 'ngenes', 'engenes', 'pexp', 'gscoef', 'train_mu', 'train_sig');
     
-    save('NCBI_SRA_Athaliana_gene_set_PC_coefs.mat', 'ngenes', 'engenes', 'pexp', 'gscoef', 'train_mu', 'train_sig');
+    rng('default')
+    [sY, stats.train_mu, stats.train_sig] = standardize(lY);
+    stats = geneset_cluster( sY, tids, sets, 'stats', stats );
+    stats = geneset_encode(sY, 5, stats);
+    
     
 end
 
