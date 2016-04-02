@@ -4,7 +4,7 @@ function NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
     MSIZE = 15;
     UNANNOTSCALE = 5;
     LEGENDFONTSIZE = 10;
-    SAVEFORBLACKBACKGROUND = true;
+    SAVEFORBLACKBACKGROUND = false;
 
 
     LIGHTEN = 50;

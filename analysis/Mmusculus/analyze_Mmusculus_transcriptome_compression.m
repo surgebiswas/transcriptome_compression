@@ -8,9 +8,11 @@ if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
     completiontext = true;
+elseif strcmpi(strtrim(hn), 'ygritte')
+    homedir = '/home/sbiswas';
 else 
     % We are working locally
-    homedir = '/Users/sbiswas';
+    homedir = '/Users/sbiswas'; 
 end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Mmusculus/'];
@@ -88,8 +90,8 @@ if false
 end
 
 load(mainDataFile);
-% qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
-% qt = qt(sids,:);
+qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
+qt = qt(sids,:);
 
 lY = log10(Y' + 0.1);
 
@@ -102,7 +104,7 @@ if false
 end
 
 % PCA. Percent variation explained vs. eigengene.
-if true;
+if false;
     [coef, pexp] = pexp_vs_components(lY, 'Mmusculus'); 
 end
 
@@ -162,6 +164,21 @@ if false
     plotSave('figures/heatmap_original_vs_reconstruction/insample_density_plot.png');
     
 end
+
+
+% Gene set analysis.
+if true
+    load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
+
+    rng('default')
+    [sY, stats.train_mu, stats.train_sig] = standardize(lY);
+    stats = geneset_cluster( sY, tids, sets, 'stats', stats );
+    stats = geneset_encode(sY, 5, stats);
+    
+    
+end
+
+
 
 
 %%% PROSPECTIVE PERFORMANCE
