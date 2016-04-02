@@ -1,0 +1,3 @@
+[submodule "analysis/gene_ontology"]
+	path = analysis/gene_ontology
+	url = https://github.com/surgebiswas/gene_ontology.git
