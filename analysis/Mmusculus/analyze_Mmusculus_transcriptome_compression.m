@@ -179,7 +179,7 @@ if true
     if true
         rng('default')
         [sY, stats.train_mu, stats.train_sig] = standardize(lY);
-        stats = geneset_cluster( sY, tids, sets, 'stats', stats );
+        stats = geneset_cluster( lY, tids, sets, 'stats', stats );
         stats = geneset_encode(sY, 100, stats);
 
         save('NCBI_SRA_Mmusculus_geneset_encoding.mat', 'stats');
