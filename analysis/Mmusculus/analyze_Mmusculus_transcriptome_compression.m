@@ -93,6 +93,12 @@ load(mainDataFile);
 qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
 qt = qt(sids,:);
 
+% reformat transcript IDs.
+splits = regexpi(tids, ',', 'split');
+sp = reshape([splits{:}], 2, length(tids))';
+stids = tids;
+tids = sp(:,2);
+
 lY = log10(Y' + 0.1);
 
 
@@ -168,12 +174,60 @@ end
 
 % Gene set analysis.
 if true
-    load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
+    load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
-    rng('default')
-    [sY, stats.train_mu, stats.train_sig] = standardize(lY);
-    stats = geneset_cluster( sY, tids, sets, 'stats', stats );
-    stats = geneset_encode(sY, 5, stats);
+    if true
+        rng('default')
+        [sY, stats.train_mu, stats.train_sig] = standardize(lY);
+        stats = geneset_cluster( sY, tids, sets, 'stats', stats );
+        stats = geneset_encode(sY, 100, stats);
+
+        save('NCBI_SRA_Mmusculus_geneset_encoding.mat', 'stats');
+    end
+    
+    
+    % Ridge fit training for predicting gene sets.
+    if false
+        load('NCBI_SRA_Athaliana_geneset_encoding.mat');
+        markers = stats.S;
+        nfolds = length(unique(qt.Submission));
+        cvi = kfoldcrossvalindbygroup(nfolds, qt.Submission);
+        target = stats.geneset.sy_sets;
+        
+        
+        % Loss function
+        trimmean_percent = 10;
+        %lf = @(ytest,yhat) sqrt( var(ytest(:)-yhat(:),1) );
+        lf = @(ytest,yhat) trimmean(abs((ytest(:) - yhat(:))./ytest(:)), ...
+            trimmean_percent, 'round', 1); % Robust relative error.
+        
+        
+        params_tune{1} = [0, logspace(-6,-2,19)]';
+        params_tune{2} = true;
+        
+        % Precompute x'*x and x'*y
+        params_tune{3}{1} = ridgefit_precompute;
+        params_tune{3}{1}.itr = 1;
+        params_tune{3}{1}.precompute = cell(nfolds,2);
+        for i = 1 : nfolds
+            x = lY(cvi~=i,markers); x = [ones(size(x,1),1),x];
+            y = target(cvi~=i,:);
+            
+            params_tune{3}{1}.precompute{i,1} =x'*x;
+            params_tune{3}{1}.precompute{i,2} =x'*y;
+        end
+        
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+        
+        
+        % Cross validate to select L2 tuning parameter.
+        cvs = cvalidate_tune(lY(:,markers), target, trainfun, ...
+        predfun, params_tune, 'crossvalind', cvi, 'loss_fun', lf);
+        
+    
+        save('NCBI_SRA_Athaliana_geneset_encoding.mat', 'stats', 'cvs');
+    end
     
     
 end
