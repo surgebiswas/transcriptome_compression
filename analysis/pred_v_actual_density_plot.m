@@ -10,11 +10,14 @@ function f = pred_v_actual_density_plot(ytrue, yhat, varargin)
         yhat = yhat(:,subi);
     end
     
-    ycat = standardize([ytrue; yhat]);
+%     ycat = standardize([ytrue; yhat]);
+% 
+%     ytrues = ycat(1:size(ytrue,1),:);
+%     ycat(1:size(ytrue,1),:) = [];
+%     yhats = ycat;
 
-    ytrues = ycat(1:size(ytrue,1),:);
-    ycat(1:size(ytrue,1),:) = [];
-    yhats = ycat;
+    ytrues = ytrue;
+    yhats = yhat;
 
 
     ytrue_lin = reshape(ytrues, size(ytrues,1)*size(ytrues,2), 1);
@@ -24,8 +27,11 @@ function f = pred_v_actual_density_plot(ytrue, yhat, varargin)
     
     f = figure;
     sf = get_standard_figure_font_sizes;
-    [hc, hc] = contourf(X,Y,density,100);
+    rdensity = (density - min(min(density)))/max(max(density));
+    [hc, hc] = contourf(X,Y,rdensity,100);
     set(hc, 'LineStyle', 'none')
+    colorbar
+    caxis([0 1]);
     axis([-3 3 -3 3])
     axis square;
     colormap(prgn); % cbrewer('seq', 'Purples', 100, 'cubic') 

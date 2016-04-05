@@ -176,10 +176,10 @@ end
 if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
-    if true
+    if false
         rng('default')
         [sY, stats.train_mu, stats.train_sig] = standardize(lY);
-        stats = geneset_cluster( lY, tids, sets, 'stats', stats );
+        stats = geneset_cluster( sY, tids, sets, 'stats', stats );
         stats = geneset_encode(sY, 100, stats);
 
         save('NCBI_SRA_Mmusculus_geneset_encoding.mat', 'stats');
@@ -187,8 +187,8 @@ if true
     
     
     % Ridge fit training for predicting gene sets.
-    if false
-        load('NCBI_SRA_Athaliana_geneset_encoding.mat');
+    if true
+        load('NCBI_SRA_Mmusculus_geneset_encoding.mat');
         markers = stats.S;
         nfolds = length(unique(qt.Submission));
         cvi = kfoldcrossvalindbygroup(nfolds, qt.Submission);
@@ -226,9 +226,35 @@ if true
         predfun, params_tune, 'crossvalind', cvi, 'loss_fun', lf);
         
     
-        save('NCBI_SRA_Athaliana_geneset_encoding.mat', 'stats', 'cvs');
+        save('NCBI_SRA_Mmusculus_geneset_encoding.mat', 'stats', 'cvs');
     end
     
+    
+    if true
+        load('NCBI_SRA_Mmusculus_geneset_encoding.mat');
+        target = stats.geneset.sy_sets;
+        markers = stats.S;
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+        ps = evaluate_prospective_performance_2(target,lY(:,markers), qt, predfun, trainfun, cvs.param_best_perf);
+        plotSave('figures/prospective_performance/losocv_genesets_density.png');
+        close
+        
+        lYs = standardize(ps.lY);
+        lYsh = standardize(ps.lY_hat);
+        [ri,ci] = hclust(lYs);
+        
+        imagesc(lYs(ri,ci),[-3 3]); colormap(prgn)
+        axis off
+        plotSave('figures/prospective_performance/losocv_genesets_heatmap_actual.png');
+        close
+        
+        imagesc(lYsh(ri,ci),[-3 3]); colormap(prgn)
+        axis off
+        plotSave('figures/prospective_performance/losocv_genesets_heatmap_predicted.png');
+        close
+
+    end
     
 end
 

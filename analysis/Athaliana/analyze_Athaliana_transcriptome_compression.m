@@ -8,6 +8,8 @@ if ~isempty(strfind(hn, '.kd.unc.edu'))
     % We are on killdevil
     homedir = '/proj/dangl_lab/sbiswas';
     completiontext = true;
+elseif strcmpi(strtrim(hn), 'ygritte')
+    homedir = '/home/sbiswas';
 else 
     % We are working locally
     homedir = '/Users/sbiswas';
@@ -275,7 +277,7 @@ end
 
 % Gene set analysis.
 if true
-    load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
+    load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
 %     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
 %     [sY, train_mu, train_sig] = standardize(lY);
 %     [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
@@ -292,7 +294,7 @@ if true
     
     
     % Ridge fit training for predicting gene sets.
-    if true
+    if false
         load('NCBI_SRA_Athaliana_geneset_encoding.mat');
         markers = stats.S;
         nfolds = length(unique(qt.Submission));
@@ -333,6 +335,34 @@ if true
     
         save('NCBI_SRA_Athaliana_geneset_encoding.mat', 'stats', 'cvs');
     end
+    
+    if true
+        load('NCBI_SRA_Athaliana_geneset_encoding.mat');
+        target = stats.geneset.sy_sets;
+        markers = stats.S;
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+        ps = evaluate_prospective_performance_2(target,lY(:,markers), qt, predfun, trainfun, cvs.param_best_perf);
+        plotSave('figures/prospective_performance/losocv_genesets_density.png');
+        close
+        
+        lYs = standardize(ps.lY);
+        lYsh = standardize(ps.lY_hat);
+        [ri,ci] = hclust(lYs);
+        
+        imagesc(lYs(ri,ci),[-3 3]); colormap(prgn)
+        axis off
+        plotSave('figures/prospective_performance/losocv_genesets_heatmap_actual.png');
+        close
+        
+        imagesc(lYsh(ri,ci),[-3 3]); colormap(prgn)
+        axis off
+        plotSave('figures/prospective_performance/losocv_genesets_heatmap_predicted.png');
+        close
+
+    end
+    
+    
     
     
 end
