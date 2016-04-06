@@ -24,10 +24,12 @@ for i = 1 : length(sets)
     
     if strcmpi(method, 'eigengene')
         rr = sign(corr(s(:,1),sy(:,mask))); 
+        sm = 1;
         if mean(rr) < 0
-            s = -s;
+            sm = -1;
         end
-        sy_sets(:,i) = s(:,1);
+        coef(mask,i) = sm*coef(mask,i);
+        sy_sets(:,i) = sy(:,mask)*coef(mask,i); %s(:,1);
     elseif strcmpi(method, 'average')
         sy_sets(:,i) = m;
     end

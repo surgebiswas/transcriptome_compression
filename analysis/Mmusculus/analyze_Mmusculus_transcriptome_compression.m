@@ -176,7 +176,18 @@ end
 if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
-    if false
+    if true 
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+        l = logspace(-6,-2,19);
+        params = {l(7), false, false};
+        results = evaluate_prospective_performance_2( ... 
+            lY, tids, sets, qt, predfun, trainfun, params );
+        
+        save('NCBI_SRA_Mmusculus_evaluate_prospective_performance_2_results.mat', 'results');
+    end
+    
+    if false % DEPRECATED
         rng('default')
         [sY, stats.train_mu, stats.train_sig] = standardize(lY);
         stats = geneset_cluster( sY, tids, sets, 'stats', stats );
@@ -187,7 +198,7 @@ if true
     
     
     % Ridge fit training for predicting gene sets.
-    if true
+    if false % DEPRECATED
         load('NCBI_SRA_Mmusculus_geneset_encoding.mat');
         markers = stats.S;
         nfolds = length(unique(qt.Submission));
@@ -230,7 +241,7 @@ if true
     end
     
     
-    if true
+    if false % DEPRECATED
         load('NCBI_SRA_Mmusculus_geneset_encoding.mat');
         target = stats.geneset.sy_sets;
         markers = stats.S;
