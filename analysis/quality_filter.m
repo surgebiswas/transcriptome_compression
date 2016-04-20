@@ -35,7 +35,7 @@ NZCUTOFF = qfparams.NZCUTOFF; % 0.35
 TPMCUTOFF = qfparams.TPMCUTOFF;
 
 
-%% SAMPLE FILTERING
+% SAMPLE FILTERING
 % 1. Depth and Mapped depth filter
 [Y,sids] = filter_by_depth_and_mapping_rate(Y, sids, depth, mapped_ratio, genplot);
 fprintf('After mapped pct/depth threshold: Num. samples = %0.0f, Num. features = %0.0f\n', length(sids), length(tids));

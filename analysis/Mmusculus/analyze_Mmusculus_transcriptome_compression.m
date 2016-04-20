@@ -176,16 +176,116 @@ end
 if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
-    if true 
+    % Training on the full data.
+    % This is the full model to use for future experiments.
+    if true
+        l = logspace(-6,-2,19);
+        params = {l(7), false, false}; %l(7) selected from earlier cross validation.
+        trainfun = @ridgefit_train;
+        predfun = @ridgefit_predict;
+        nmarkers = 100;
+        
+        % Test expression optimization.
+        if false
+            meanexp = mean(lY);
+            [sY, model.train_mu, model.train_sig] = standardize(lY);
+            model = geneset_cluster( sY, tids, sets, 'stats', model );
+            model_expopt_100 = geneset_encode(sY, nmarkers, model, 'expression_delta', 100, 'mean_expression', meanexp);
+            model_expopt_20 = geneset_encode(sY, nmarkers, model, 'expression_delta', 20, 'mean_expression', meanexp);
+            model_expunopt = geneset_encode(sY, nmarkers, model, 'expression_delta', 0, 'mean_expression', meanexp);
+            
+            
+            
+            figure
+            hold on
+            plot(model_expopt_100.punexp, '-b')
+            plot(model_expopt_20.punexp, '-r')
+            plot(model_expunopt.punexp, '-k')
+
+            
+            figure;
+            subplot(1,3,1);
+            bar( 10.^mean(lY(:,model_expunopt.S)) - 0.1);
+            axis square
+            
+            subplot(1,3,2);
+            bar( 10.^mean(lY(:,model_expopt_20.S)) - 0.1);
+            axis square
+            
+            subplot(1,3,3);
+            bar(10.^mean(lY(:,model_expopt_100.S)) - 0.1);
+            axis square
+            
+        end
+        
+        % expression optimization code suggests a delta (neighborhood size) of 20 is best.
+        model = tradict_train( lY, tids, sets, trainfun, params, 'expression_delta', 20 );
+        
+        save('NCBI_SRA_Mmmusculus_final_tradict_model.mat', 'model');
+    end
+    
+    
+    % Full cross validation.
+    if false 
         trainfun = @ridgefit_train;
         predfun = @ridgefit_predict;
         l = logspace(-6,-2,19);
         params = {l(7), false, false};
+        nfolds = 100;
         results = evaluate_prospective_performance_2( ... 
-            lY, tids, sets, qt, predfun, trainfun, params );
+            lY, tids, sets, qt, predfun, trainfun, params, nfolds );
         
         save('NCBI_SRA_Mmusculus_evaluate_prospective_performance_2_results.mat', 'results');
     end
+    
+    
+    % Results of full cross validation.
+    if false
+        NSTHRESH = 6;
+        [ts, ns] = subadjust(results.target_proc, qt.Submission);
+        ps = subadjust(results.pred_proc, qt.Submission);
+        
+        % gene set median relative errors. 
+        rel = abs((results.pred_proc - results.target_proc)./results.target_proc);
+        rel(rel == inf) = nan;
+        mrel = nanmedian(rel); 
+        
+        % gene set Rsq between standardized expression.
+        rsq = rsq_and_slope(ts(ns>=NSTHRESH,:),ps(ns>=NSTHRESH,:));
+        
+        % Gene set prediction error as a function of gene set size and
+        % average expression.
+        if true
+            report = cell(length(sets),6);
+            for i = 1 : length(sets)
+                mask = steq(tids, sets{i});
+                me = mean(lY(:,mask));
+                avgexp = mean(me);
+                seexp = std(me)/sqrt(sum(mask)-1);
+                ngenes = sum(mask);
+
+                report{i,1} = setnames{i,1};
+                report{i,2} = ngenes;
+                report{i,3} = avgexp; %sprintf('%0.2f +/- %0.2f', avgexp, seexp);
+                report{i,4} = seexp;
+                report{i,5} = mrel(i);
+                report{i,6} = rsq(i);
+            
+                
+            end
+            
+            dout = cell2dataset(report, 'VarNames', {'Set_Name', ...
+                'Set_Size', 'Avg_Member_Exp', ...
+                'StdErr_Member_Exp', 'Median_Relative_Error', ...
+                'Intra_Submission_PCC'});
+            
+            
+            export(dout, 'file', 'Mmusculus_geneset_accuracy_report.txt');
+        end
+        
+    end
+    
+    
     
     if false % DEPRECATED
         rng('default')

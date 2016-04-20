@@ -1,5 +1,12 @@
-function [ stats ] = geneset_encode( sY, nmarkers, stats )
+function [ stats ] = geneset_encode( sY, nmarkers, stats, varargin )
 % stats = struct ouptut from geneset_cluster.m
+
+% Expression optimization
+% expdelta is allowed neighborhood size in # markers. 
+% if expdelta is non-zero then mean_expression needs to be suplied. This is
+% a gene long vector of average expressions for each gene.
+expdelta = setParam(varargin, 'expression_delta', 0);
+meanexp = setParam(varargin, 'mean_expression', []);
 
 memmat = stats.geneset.coef ~= 0;
 
@@ -14,7 +21,7 @@ for i = 1 : nmarkers
     [maxpex, mind] = max(cpunexp);
     selected_clusters(i) = mind;
     
-    [S, R] = add_marker_from_geneset_cluster(sY, Y, S,  R, mind, memmat, stats);
+    [S, R] = add_marker_from_geneset_cluster(sY, Y, S,  R, mind, memmat, stats, expdelta, meanexp);
     
     tvr(i) = tv(R);
     
@@ -38,7 +45,7 @@ stats.punexp = tvr./tvy;
         
     end
 
-    function [s, r] = add_marker_from_geneset_cluster(sY, y, s, r, idx, memmat, stats)
+    function [s, r] = add_marker_from_geneset_cluster(sY, y, s, r, idx, memmat, stats, expdelta, meanexp)
         
         % rsub is a subset of the residual belonging to genesets 
         rsub = r(:, stats.conclust.c == idx);
@@ -50,7 +57,21 @@ stats.punexp = tvr./tvy;
         pc = corr(sY(:, allowedgenes), rsub);
         
         pcavgabs = mean(abs(pc),2); 
-        [~,bestind] = max(pcavgabs);
+        
+        if expdelta == 0
+            [~,bestind] = max(pcavgabs);
+        else
+            [~,sidx] = sort(pcavgabs, 'descend');
+            
+            topind = sidx(1:min(length(pcavgabs),expdelta));
+            mexps = meanexp(allowedgenes(topind));
+            mtarg = prctile(meanexp, 75);
+            
+            % pick the gene within the neighborhood
+            % with expression closest to the average expression.
+            [~,bi] = min(abs(mexps - mtarg)); 
+            bestind = topind(bi);
+        end
         s(i) = allowedgenes(bestind); % 'i' in main code body.
         
         

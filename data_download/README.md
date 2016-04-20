@@ -14,6 +14,11 @@ Sailfish is a tool to perform rapid, alignment-free quantification of isoform ab
 
 http://www.cs.cmu.edu/~ckingsf/software/sailfish/downloads.html
 
+In this work we have used v0.6.3 Linux binaries. Note that a newer version (v0.7.0) now exists, and that Lior Pachter's group at Berkeley have developed another alignment-free tool called Kallisto. We did not use these tools in our paper in order to maintain consistency between samples, but we will be updating our analyses with one of these tools based on latest benchmarking results.
+
+The Sailfish v0.6.3 are packaged with this repository. You need to add `export LD_LIBRARY_PATH=<path/to/Sailfish-0.6.3-Linux_x86-64/lib:$LD_LIBRARY_PATH` to your `.bash_profile` or `.bashrc`. Next add `export PATH=<path/to/Sailfish-0.6.3-Linux_x86-64/bin:$PATH` to your `.bash_profile` or `.bashrc`.
+
+
 ## Get `srafish.pl`
 To get `srafish.pl` you'll need to download our GitHub repository. If you have Git installed, you can grab our code by entering the following in your command line: `git clone https://github.com/surgebiswas/transcriptome_compression.git`. Otherwise, you can grab the repository manually by navigating to `https://github.com/surgebiswas/transcriptome_compression` and clicking "Clone in Desktop" or "Download Zip" (and then unzipping the archive).
 

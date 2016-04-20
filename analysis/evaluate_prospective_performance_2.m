@@ -1,4 +1,4 @@
-function results = evaluate_prospective_performance_2( lY, tids, sets, qt, predfun, trainfun, params )
+function results = evaluate_prospective_performance_2( lY, tids, sets, qt, predfun, trainfun, params, nfolds )
 
 % leave one submission out CV
 rng('default');
@@ -9,7 +9,7 @@ if exist(progfile, 'file')
 else
     istart = 1;
     usubs = unique(qt.Submission);
-    cvi = kfoldcrossvalindbygroup(length(usubs), qt.Submission);
+    cvi = kfoldcrossvalindbygroup(nfolds, qt.Submission);
     target_proc = zeros(size(lY,1), length(sets));
     pred_proc = zeros(size(lY,1), length(sets));
 end
