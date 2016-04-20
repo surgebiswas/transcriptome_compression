@@ -8,7 +8,7 @@ cd('~/GitHub/data/transcriptome_compression/parnas_bdmc_crispr');
 
 load('SRA248232_assembled_srafish_output.mat');
 load('parnas_design.mat');
-load('/home/sbiswas/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015_quality_filtered.mat', 'tids');
+load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_full_data_up_to_19Sept2015_quality_filtered.mat', 'tids');
 
 
 
@@ -63,7 +63,37 @@ else
 end
 
 load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
-load('/home/sbiswas/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmmusculus_final_tradict_model.mat');
+load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmmusculus_final_tradict_model.mat');
+
+
+% Estimate major effects
+[~, s] = pca(lY, 'NumComponents', 10);
+batch1 = s(:,1) < -20;
+batch2 = s(:,1) > -20 & s(:,3) < -4;
+batch3 = s(:,1) > -20 & s(:,3) > -4 & s(:,3) < 7.2;
+batch4 = s(:,1) > -20 & s(:,3) > 7.2;
+treat = zeros(size(lY,1),1);
+treat(strcmpi(xd.treatment, 'LPS  2 hours')) = 1;
+treat(strcmpi(xd.treatment, 'LPS  4 hours')) = 2;
+treat(strcmpi(xd.treatment, 'LPS  6 hours')) = 3;
+
+xeff = [ones(length(batch1),1), batch1, batch2, batch3, treat];
+
+
+
+
+
+gY = lY*model.geneset.coef;
+b = estimate_effects(xeff, gY);
+gYadj = gY - xeff(:,2:4)*b(2:4,:);
+sya = standardize(gYadj);
+
+gYh = ridgefit_predict(lY(:,model.S), model.fit);
+b = estimate_effects(xeff, gYh);
+gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
+syha = standardize(gYhadj);
+
+
 
 
 
@@ -79,7 +109,7 @@ if false
     figure;
     hold on
     for i = 1 : length(ut)
-        mask = strcmpi(v, ut{i}); mask = [mask;mask];
+        mask = strcmpi(v, ut{i}); 
         plot3(s(mask,1), s(mask,2), s(mask,3), '.', 'Color', rand(1,3));
     end
 
