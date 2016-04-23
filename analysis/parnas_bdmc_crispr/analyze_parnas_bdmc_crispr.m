@@ -56,6 +56,61 @@ if false
     xd(torm,:) = [];
     lY(torm,:) = [];
     
+    
+    % Add pathway and regulator class information
+    canonical = {'Lbp', 'Ly96', 'Tlr4', 'Cd14', 'Tirap', 'Myd88', 'Ticam2', ...
+        'Ticam1', 'Irak4', 'Irak1', 'Ripk1', 'Traf6', 'Tab1', 'Tab2', 'Map3k7', ...
+        'Irf5', 'Ikbkg', 'Chuk', 'Nfkb1', 'Ikbkb', 'Map3k8', 'Nfkbia', 'Rela', 'Tnf'};
+    ost = {'Srp54c', 'Srpr', 'Sec61', 'Rpn2', 'Rpn1', 'Ddost', 'Dad1', 'Alg2', 'Hsp90b1', ...
+        'Sec13'};
+    paf = {'Paf1', 'Ctr9', 'Wdr61', 'Rtf1', 'Leo1'};
+    kc = dataset('file', 'KO_categories_nonredundant.csv', 'ReadObsNames', true, 'ReadVarNames', false, 'Delimiter', ',');
+    kc( sum(double(kc),2) == 0, : ) = [];
+    ko2direc = containers.Map;
+    o = get(kc, 'ObsNames');
+    for i = 1 : length(kc)
+        if kc.Var2(i) == 1
+            ko2direc(o{i}) = 1; % positive regulator
+        elseif kc.Var3(i) == 1
+            ko2direc(o{i}) = -1; % negative regulator
+        end
+    end
+    
+    pathway = cell(size(xd,1),1);
+    regclass = cell(size(xd,1),1);
+    for i = 1 : length(pathway)
+        if any(strcmpi(canonical, xd.KO{i}))
+            pathway{i} = 'canonical';
+        elseif any(strcmpi(ost, xd.KO{i}))
+            pathway{i} = 'ost';
+        elseif any(strcmpi(paf, xd.KO{i}))
+            pathway{i} = 'paf';
+        else
+            pathway{i} = 'other';
+        end
+        
+        if ko2direc.isKey(xd.KO{i})
+            regclass{i} = ko2direc(xd.KO{i});
+        else
+            regclass{i} = 0;
+        end
+    end
+    
+    toadd = cell2dataset([regclass, pathway], 'VarNames', {'reg_class', 'pathway'}, 'ObsNames', get(xd, 'ObsNames'));
+    xd = [xd, toadd];
+    
+    
+    % focus on KOs where we know whether its a + or - regulator and in
+    % which Brefeldin A has not been added (since those are the RNA-seq
+    % results they describe in the paper). 
+    % Also remove negative regulators from the analysis since a saturating
+    % dose of LPS given. Also it does not looks like that the negative
+    % regulators strongly affect response to LPS or cell response to Tnf.
+    torm = (xd.reg_class == 0 & ~strcmpi(xd.KO, 'none')) | ~strcmpi(xd.condition, 'NA') | xd.reg_class == -1;
+    xd(torm,:) = [];
+    lY(torm,:) = [];
+    
+    
     save('parnas_processed.mat', 'lY', 'xd', 'tids');
 else
     load('parnas_processed.mat');
@@ -81,8 +136,6 @@ xeff = [ones(length(batch1),1), batch1, batch2, batch3, treat];
 
 
 
-
-
 gY = lY*model.geneset.coef;
 b = estimate_effects(xeff, gY);
 gYadj = gY - xeff(:,2:4)*b(2:4,:);
@@ -92,6 +145,52 @@ gYh = ridgefit_predict(lY(:,model.S), model.fit);
 b = estimate_effects(xeff, gYh);
 gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
 syha = standardize(gYhadj);
+
+% Differential pathway expression analysis.
+if true
+    % Build design matrix.
+    time = zeros(size(xd,1),1);
+    time(strcmpi(xd.treatment, 'No LPS')) = 0; 
+    time(strcmpi(xd.treatment, 'LPS  2 hours')) = 2; 
+    time(strcmpi(xd.treatment, 'LPS  4 hours')) = 4; 
+    time(strcmpi(xd.treatment, 'LPS  6 hours')) = 6; 
+    
+    rc = xd.reg_class;
+    
+    X = [time, rc];
+    
+    % Build the linear models and obtain p-values]
+    % This is a well behaved linear model with two terms and low
+    % multicolinearity
+    pval_true = zeros(size(X,2) + 1, size(gYadj,2));
+    pval_pred = pval_true;
+    for i = 1 : size(gYadj,2)
+        stats_true = regstats(gYadj(:,i), X, 'linear');
+        stats_pred = regstats(gYhadj(:,i), X, 'linear');
+        
+        pval_true(:,i) = stats_true.tstat.pval;
+        pval_pred(:,i) = stats_pred.tstat.pval;
+        disp(i);
+    end
+    
+    % Adjust to FDR for reg class coefficint 
+    fdr_true = mafdr(pval_true(3,:)', 'BHFDR', true);
+    fdr_pred = mafdr(pval_pred(3,:)', 'BHFDR', true);
+    
+    % Make a report.
+    [~,sidx] = sort(fdr_pred);
+    
+    mr = [num2cell([fdr_true(sidx), fdr_pred(sidx)]), setnames(sidx,1)];
+    
+   
+    
+    
+    
+    
+    
+    
+
+end
 
 
 
