@@ -118,6 +118,7 @@ else
 end
 
 load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
+load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_final_tradict_model_marker_genes_expression_mat.mat');
 load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmmusculus_final_tradict_model.mat');
 
 
@@ -141,13 +142,22 @@ b = estimate_effects(xeff, gY);
 gYadj = gY - xeff(:,2:4)*b(2:4,:);
 sya = standardize(gYadj);
 
-gYh = ridgefit_predict(lY(:,model.S), model.fit);
+
+% Perform TPM correction for low read counts
+t = 10.^lY(:,model.S) - 0.1;
+mu = mean(log(ysub + 0.1));
+Sigma = cov(log(ysub + 0.1));
+zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
+lY_c = zhat;
+
+
+gYh = ridgefit_predict(lY_c, model.fit); %ow lY(:,model.S)
 b = estimate_effects(xeff, gYh);
 gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
 syha = standardize(gYhadj);
 
 % Differential pathway expression analysis.
-if true
+if false
     % Build design matrix.
     time = zeros(size(xd,1),1);
     time(strcmpi(xd.treatment, 'No LPS')) = 0; 

@@ -173,7 +173,7 @@ end
 
 
 % Gene set analysis.
-if true
+if false
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
     % Training on the full data.
@@ -221,7 +221,7 @@ if true
         % expression optimization code suggests a delta (neighborhood size) of 20 is best.
         model = tradict_train( lY, tids, sets, trainfun, params, 'expression_delta', 20 );
         
-        save('NCBI_SRA_Mmmusculus_final_tradict_model.mat', 'model');
+        save('NCBI_SRA_Mmusculus_final_tradict_model.mat', 'model');
     end
     
     
