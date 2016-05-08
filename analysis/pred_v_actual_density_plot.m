@@ -34,7 +34,7 @@ function f = pred_v_actual_density_plot(ytrue, yhat, varargin)
     caxis([0 1]);
     axis([-3 3 -3 3])
     axis square;
-    colormap(prgn); % cbrewer('seq', 'Purples', 100, 'cubic') 
+    colormap(parula); % cbrewer('seq', 'Purples', 100, 'cubic') 
     xlabel('Predicted expression', 'FontSize', sf.axis_labels);
     ylabel('Actual expression', 'FontSize', sf.axis_labels);
     set(gca, 'FontSize', sf.axis_tick_labels);

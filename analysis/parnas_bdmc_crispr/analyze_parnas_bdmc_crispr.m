@@ -120,7 +120,12 @@ end
 load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_final_tradict_model_marker_genes_expression_mat.mat');
 load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmmusculus_final_tradict_model.mat');
+xd.treatment = regexprep(xd.treatment, 'LPS  ', 'LPS ');
 
+splits = regexpi(tids, ',', 'split');
+sp = reshape([splits{:}], 2, length(tids))';
+stids = tids;
+tids = sp(:,2);
 
 % Estimate major effects
 [~, s] = pca(lY, 'NumComponents', 10);
@@ -136,25 +141,87 @@ treat(strcmpi(xd.treatment, 'LPS  6 hours')) = 3;
 xeff = [ones(length(batch1),1), batch1, batch2, batch3, treat];
 
 
-
+% Gene set adjustments - actual
 gY = lY*model.geneset.coef;
 b = estimate_effects(xeff, gY);
 gYadj = gY - xeff(:,2:4)*b(2:4,:);
 sya = standardize(gYadj);
 
+% All genes adjustments - actual
+b = estimate_effects(xeff, lY);
+lYadj = lY - xeff(:,2:4)*b(2:4,:);
+lya = standardize(lYadj);
+
+
+
 
 % Perform TPM correction for low read counts
-t = 10.^lY(:,model.S) - 0.1;
-mu = mean(log(ysub + 0.1));
-Sigma = cov(log(ysub + 0.1));
-zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
-lY_c = zhat;
+% t = 10.^lY(:,model.S) - 0.1;
+% 
+% mu = mean(lY(:,model.S));
+% Sigma = cov(lY(:,model.S)); %cov(log(ysub + 0.1));
+% zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
+% 
+% % Sigma = cov(zhat);
+% % mu = mean(zhat);
+% % zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
+% 
+% lY_c = log10(exp(zhat) + 0.1);
 
-
-gYh = ridgefit_predict(lY_c, model.fit); %ow lY(:,model.S)
+% Gene set adjustments - predicted
+gYh = ridgefit_predict(lY(:,model.S), model.fit); % ow lY(:,model.S)
 b = estimate_effects(xeff, gYh);
 gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
 syha = standardize(gYhadj);
+
+% Gene set adjustments - actual
+lYh = ridgefit_predict(lY(:,model.S), model.fit_allgenes); % ow lY(:,model.S)
+b = estimate_effects(xeff, lYh);
+lYhadj = lYh - xeff(:,2:4)*b(2:4,:);
+lyha = standardize(lYhadj);
+
+
+
+if true
+    ir = {
+    'immune response';
+    'neutrophil chemotaxis';
+    'chemotaxis';
+    'positive regulation of ERK1 and ERK2 cascade';
+    'defense response';
+    'cellular response to tumor necrosis factor';
+    'positive regulation of inflammatory response';
+    'positive regulation of T cell proliferation';
+    'regulation of inflammatory response';
+    'inflammatory response';
+    'cellular response to interferon-gamma';
+    'negative regulation of inflammatory response';
+    'defense response to Gram-positive bacterium';
+    'response to lipopolysaccharide';
+    'defense response to bacterium';
+    'positive regulation of interferon-gamma production';
+    'positive regulation of JNK cascade';
+    'positive regulation of tumor necrosis factor production';
+    'immune system process';
+    'activation of MAPK activity';
+    'cytokine-mediated signaling pathway';
+    'cellular response to lipopolysaccharide';
+    'innate immune response';
+    'positive regulation of interleukin-6 production';
+    'positive regulation of NF-kappaB transcription factor activity'};
+
+    [~,proc2keep] = ismember(ir,setnames(:,1));
+
+    m = steq(setnames(:,1), ir);
+    imgenes = sum(model.geneset.coef(:,m),2) ~= 0;
+    [kop,ci] = plot_immune_heatmaps(xd, standardize(lY(:,imgenes)), snames, [], []);
+    
+    
+    
+    
+    
+    
+end
 
 % Differential pathway expression analysis.
 if false
@@ -192,12 +259,14 @@ if false
     
     mr = [num2cell([fdr_true(sidx), fdr_pred(sidx)]), setnames(sidx,1)];
     
+    
+    
    
     
-    
-    
-    
-    
+    labels = fdr_true < 0.01;
+    scores = 1 - fdr_pred;
+    [xx,yy, ~, auc] = perfcurve(labels, scores, 1);
+    disp(auc)
     
 
 end
