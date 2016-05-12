@@ -1,0 +1,102 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{amsfonts}
+\usepackage{bbm}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{moreverb}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{cite}
+\usepackage{mathtools}
+\usepackage[font=small]{caption}
+
+%\usepackage{natbib}
+
+
+\bibliographystyle{unsrt}
+
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+
+
+% Font
+
+%\renewcommand{\familydefault}{\sfdefault}
+
+
+
+\author{Surojit Biswas}
+\date{}
+
+
+\title{Tradict}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\vspace{10mm}
+
+
+Tradict attempts to learn a small set of statistically representative \emph{marker} genes from a collection of training transcriptomes. In prospective scenarios, where only these marker genes are measured, Tradict uses these sparse measurements to reconstruct the expression of biological pathways or the entire transcriptome as needed.
+
+The rest of this document is organized as follows: In Section \ref{prelim} we define key mathematical concepts and terms needed for what follows. In Section \ref{model} we detail Tradict's underlying generative model. In Section \ref{inference}, we then discuss model inference as it relates to encoding the transcriptome and decoding a sparse sampling of it.
+
+\section{Preliminaries} \label{prelim}
+
+For a matrix $A$, $A_{:i}$ and $A_{i:}$ index the $i^{th}$ column and row, respectively. For a set of indices, $q$, we use $-q$ to refer to all indices not specified by $q$. 
+
+We define the continuous relaxation of the Poisson distribution (hereafter, Continuous-Poisson) to have the following density function:
+\[
+f(x|\lambda) = \frac{e^{-\lambda} \lambda^x}{\int_0^\infty e^{-\lambda} \lambda^k \textrm{d}k}
+\]
+
+Our collection $n$ of training transcriptomes is represented by $x \in \mathbb{R}^{n \times g}$, where $x_{ij}$ denotes the measured transcripts per million (TPM) of gene $j$ in sample $i$. 
+
+
+
+\section{Model} \label{model}
+
+Tradict uses a Continuous-Poisson Multivariate Normal (CP-MVN) hierarchical model to model transcript abundances, measured as transcripts per million (TPM). Specifically, given a set of representative markers, Tradict first attempts to hierarchically model the expression of biological pathways given these marker abundances. It then models the expression of all genes in the transcriptome given the expression of these pathways.
+
+We assume that for the TPM measured for gene $j$, $t_j$, there is an associated, unmeasured latent abundance $z_j$. This latent abundance (up to a increasing-monotonic transformation) represents the gene's true abundance, of which the measured TPM is a noisy realization. Let $s \in \mathbb{R}^{G}$ be a vector of \emph{scores} (discussed below) representing the expression of a given set of $G$ pathways, and let $m$ be a set of indices for a given panel of representative markers.
+
+We define the CP-MVN model as follows:
+
+\begin{align*}
+z_m & \sim \mathcal{N}(\mu_m, \Sigma_m)  & \textrm{[Layer 4]} \\
+s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m})  & \textrm{[Layer 3]}\\
+z_{-m}|s & \sim \mathcal{N}(\mu_{z_{-m}|s}, \Sigma_{z_{-m}|s}) & \textrm{[Layer 2]}\\
+t_j & \sim \textrm{Continuous-Poisson}(\exp(z_j)) & \textrm{[Layer 1]}
+\end{align*}
+Here, $\mu_m$ and $\Sigma_m$ refer to mean vector and covariance matrix of $z_m$. Given these the conditional mean and covariance of the pathway scores and the latent abundances of all non-marker genes can be obtained through gaussian conditioning. Specifically, for two normally distributed variables $a$ and $b$ the conditional mean of $b$ given $a$ is given by $\mu_{b|a} = \mu_b + (a - \mu_a)\Sigma_{a}^{-1}\sigma_{ab}$ and $\Sigma_{b|a} = \Sigma_{b} - \sigma_{ab}^T\Sigma_a^{-1}\sigma_{ab}$, where $\sigma_{ab}$ is the cross-covariance between $a$ and $b$, and $\Sigma_a$ and $\Sigma_b$ are the covariance matrices of $a$ and $b$, respectively.
+
+\subsection{Model Properties}
+Mean-Variance and overdispersion. Noise correction/buffering.
+
+\section{Inference} \label{inference}
+
+
+During decoding, Tradict attempts to infer pathway expression scores and the transcriptome using only TPM measurements of the representative markers. We first note that due self-conjugacy of the Normal distribution Layers 2 and 3 in the CP-MVN model above can be collapsed. Therefore, the model may be partitioned into two separate models for pathway score prediction and transcriptome prediction. For pathway scores we have,
+\begin{align*}
+z_m & \sim \mathcal{N}(\mu_m, \Sigma_m) \\
+s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m}) \\
+\end{align*}
+For gene expression we have,
+\begin{align*}
+z_m & \sim \mathcal{N}(\mu_m, \Sigma_m) \\
+z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
+t_j & \sim \textrm{Continuous-Poisson}(\exp(z_j))
+\end{align*}
+
+Notice that predictions of both pathway scores and the remaining transcriptome depend on the latent abundances of the representative markers (not the measured abundances). Therefore, Tradict first learns these latent abundances using the observed TPM measurements and estimates of $\mu_m$ and $\Sigma_m$ it has learned from the training data. Specifically, suppose Tradict has estimates of $\mu_m$ and $\Sigma_m$ given by $\hat{\mu}_m$ and $\hat{\Sigma}_m$.
+
+
+
+
+
+\end{document}
