@@ -68,32 +68,73 @@ We assume that for the TPM measured for gene $j$, $t_j$, there is an associated,
 We define the CP-MVN model as follows:
 
 \begin{align*}
-z_m & \sim \mathcal{N}(\mu_m, \Sigma_m)  & \textrm{[Layer 4]} \\
+z_m & \sim \mathcal{N}\left(\mu^{(m)}, \Sigma^{(m)}\right)  & \textrm{[Layer 4]} \\
 s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m})  & \textrm{[Layer 3]}\\
 z_{-m}|s & \sim \mathcal{N}(\mu_{z_{-m}|s}, \Sigma_{z_{-m}|s}) & \textrm{[Layer 2]}\\
 t_j & \sim \textrm{Continuous-Poisson}(\exp(z_j)) & \textrm{[Layer 1]}
 \end{align*}
-Here, $\mu_m$ and $\Sigma_m$ refer to mean vector and covariance matrix of $z_m$. Given these the conditional mean and covariance of the pathway scores and the latent abundances of all non-marker genes can be obtained through gaussian conditioning. Specifically, for two normally distributed variables $a$ and $b$ the conditional mean of $b$ given $a$ is given by $\mu_{b|a} = \mu_b + (a - \mu_a)\Sigma_{a}^{-1}\sigma_{ab}$ and $\Sigma_{b|a} = \Sigma_{b} - \sigma_{ab}^T\Sigma_a^{-1}\sigma_{ab}$, where $\sigma_{ab}$ is the cross-covariance between $a$ and $b$, and $\Sigma_a$ and $\Sigma_b$ are the covariance matrices of $a$ and $b$, respectively.
+Here, $\mu^{(m)}$ and $\Sigma^{(m)}$ refer to mean vector and covariance matrix of $z_m$. Given these the conditional mean and covariance of the pathway scores and the latent abundances of all non-marker genes can be obtained through gaussian conditioning. Specifically, for two normally distributed variables $a$ and $b$ the conditional mean of $b$ given $a$ is given by $\mu_{b|a} = \mu_b + (a - \mu_a)\Sigma_{a}^{-1}\sigma_{ab}$ and $\Sigma_{b|a} = \Sigma_{b} - \sigma_{ab}^T\Sigma_a^{-1}\sigma_{ab}$, where $\sigma_{ab}$ is the cross-covariance between $a$ and $b$, and $\Sigma_a$ and $\Sigma_b$ are the covariance matrices of $a$ and $b$, respectively.
 
 \subsection{Model Properties}
-Mean-Variance and overdispersion. Noise correction/buffering.
+Mean-Variance and overdispersion. Noise correction/buffering. Skewness
 
 \section{Inference} \label{inference}
 
 
 During decoding, Tradict attempts to infer pathway expression scores and the transcriptome using only TPM measurements of the representative markers. We first note that due self-conjugacy of the Normal distribution Layers 2 and 3 in the CP-MVN model above can be collapsed. Therefore, the model may be partitioned into two separate models for pathway score prediction and transcriptome prediction. For pathway scores we have,
 \begin{align*}
-z_m & \sim \mathcal{N}(\mu_m, \Sigma_m) \\
+z_m & \sim \mathcal{N}\left(\mu^{(m)}, \Sigma^{(m)} \right) \\
 s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m}) \\
 \end{align*}
 For gene expression we have,
 \begin{align*}
-z_m & \sim \mathcal{N}(\mu_m, \Sigma_m) \\
+z_m & \sim \mathcal{N}(\mu^{(m)}, \Sigma^{(m)}) \\
 z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
 t_j & \sim \textrm{Continuous-Poisson}(\exp(z_j))
 \end{align*}
 
-Notice that predictions of both pathway scores and the remaining transcriptome depend on the latent abundances of the representative markers (not the measured abundances). Therefore, Tradict first learns these latent abundances using the observed TPM measurements and estimates of $\mu_m$ and $\Sigma_m$ it has learned from the training data. Specifically, suppose Tradict has estimates of $\mu_m$ and $\Sigma_m$ given by $\hat{\mu}_m$ and $\hat{\Sigma}_m$.
+Notice that predictions of both pathway scores and the remaining transcriptome depend on the latent abundances of the representative markers (not the measured abundances). Therefore, Tradict must first learn these latent abundances using the observed TPM measurements, $t_m$, and estimates of $\mu^{(m)}$ and $\Sigma^{(m)}$ it has learned from the training data. Specifically, suppose Tradict has estimates of $\mu^{(m)}$ and $\Sigma^{(m)}$ given by $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$. Given these and the measured marker TPMs, we can calculate a maximum \emph{a posteriori} (MAP) estimate of $z_m$. 
+
+The posterior distribution over $z_m$ is given by 
+\begin{align*}
+p(z_m| t_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) & =  \frac{p(t_m | z_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(z_m| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) }{ \int_k  p(t_m | k, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(k | \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \textrm{d}k } \\
+& \propto \prod_{i=1}^{n}  p(t_{im} | z_{im}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(z_{im}| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \\
+& = \prod_{i=1}^{n} \left[ \prod_{j=1}^{|m|} \exp(z_{ij})^{t_{ij}}  e^{-\exp(z_{ij})} / \int_0^\infty \exp(z_{ij})^{k}  e^{-\exp(z_{ij})} \right] \\ 
+& \times \frac{1}{\sqrt{2\pi|\hat{\Sigma}^{(m)}|}^{|m|}}\exp\left(-\frac{1}{2}(z_{i:}-\hat{\mu}^{(m)}) \textrm{inv}\left( \hat{\Sigma}^{(m)} \right)(z_{i:}-\hat{\mu}^{(m)})^T \right)
+\end{align*}
+where for notational clarity we have used $\textrm{inv}(\cdot)$ to represent matrix inverse. 
+
+Given $z$ is a matrix parameter, this may be difficult to solve directly. However,note that given $z_{ij}$, $t_{ij}$ is conditionally independent of $t_{i-j}$. Additionally, given $z_{i-j}$, $z_{ij}$ is normally distributed with mean and covariance 
+\begin{align*}
+a_{ij} & = \mu^{(m)}_j + \left(z_{i,-j} - \mu^{(m)}_{-j} \right)\textrm{inv}\left( \Sigma^{(m)}_{-j,-j} \right) \Sigma^{(m)}_{-j,j} \\
+\sigma_j &= \Sigma^{(m)}_{j,j} - \Sigma^{(m)}_{j,-j}\textrm{inv}\left( \Sigma^{(m)}_{-j,-j} \right) \Sigma^{(m)}_{-j,j}
+\end{align*}
+respectively. Taken together, this suggests an iterative conditional modes algorithm in which we maximize the posterior one column of $z$ at a time, while conditioning on all others. 
+
+Let $\hat{z}$ denote our current estimate of $z$. Our objective is given by,
+\begin{align*}
+\hat{z}_{ij} & = \argmax_{z_{ij}} \log p(z_{ij} | t_{ij}, \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \\
+& = \argmax_{z_{ij} | z_{i,-j} } \log p(t_{ij} | z_{ij}, \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})p(z_{ij} | \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
+& = \argmax_{z_{ij} | z_{i,-j} } \log p(t_{ij} | z_{ij})p(z_{ij} | \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
+& = \argmax_{z_{ij} | z_{i,-j} } \log \left[ \exp(z_{ij})^{t_{ij}}  e^{-\exp(z_{ij})} \exp \left( -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 \right) \right] \\
+& = \argmax_{z_{ij} | z_{i,-j} }  t_{ij}z_{ij} -\exp(z_{ij})  -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 
+\end{align*}
+
+Differentiating we get,
+\begin{align*}
+\frac{\partial}{\partial z_{ij}}  t_{ij}z_{ij} -\exp(z_{ij})  -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 \\ 
+= t_{ij} - \exp(z_{ij})  -\frac{1}{\sigma_j}(z_{ij} - a_{ij}) \\ 
+\end{align*}
+Because $z_{ij}$ appears as a linear and exponential term, we cannot solve this gradient analytically. We therefore utilize Newton-Raphson optimization. For this we also require the Hessian, which is given by,  
+\begin{align*}
+\frac{\partial}{\partial z_{ij}} t_{ij} - \exp(z_{ij})  -\frac{1}{\sigma_j}(z_{ij} - a_{ij}) \\ 
+=  -\exp(z_{ij})  - \frac{1}{\sigma_j} < 0\\ 
+\end{align*}
+
+Useful properties? Noise correction of markers.
+
+
+
 
 
 
