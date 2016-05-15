@@ -1,4 +1,6 @@
 \contentsline {section}{\numberline {1}Preliminaries}{1}
 \contentsline {section}{\numberline {2}Model}{1}
-\contentsline {subsection}{\numberline {2.1}Model Properties}{2}
 \contentsline {section}{\numberline {3}Inference}{2}
+\contentsline {subsection}{\numberline {3.1}Latent abundance inference for markers}{2}
+\contentsline {subsection}{\numberline {3.2}Prediction of pathway scores and TPM abundance of remaining genes}{4}
+\contentsline {section}{\numberline {4}Properties of the CP-MVN hierarchical model}{4}
