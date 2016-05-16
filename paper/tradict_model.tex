@@ -134,16 +134,34 @@ Because $z_{ij}$ appears as a linear and exponential term, Tradict cannot solve 
 \frac{\partial}{\partial z_{ij}} t_{ij} - \exp(z_{ij})  -\frac{1}{\sigma_j}(z_{ij} - a_{ij}) \\ 
 =  -\exp(z_{ij})  - \frac{1}{\sigma_j} < 0\\ 
 \end{align*}
+Notice the Hessian is always negative-definite, which implies each update has a single, unique optimum. 
 
-In practice, the Newton-Raphson updates can be performed in vectorized fashion  for each column of $z$, iteratively. We generally find that this optimization takes 5-15 iterations (full passes over all columns of $z$) and less than a minute to converge.  
+In practice, the Newton-Raphson updates can be performed in vectorized fashion iteratively for each column of $z$. We generally find that this optimization takes 5-15 iterations (full passes over all columns of $z$) and less than a minute to converge.  
 
 \subsection{Prediction of pathway scores and TPM abundance of remaining genes}
 
 Given the learned latent marker abundances, Tradict can calculate expected pathway scores and the TPM abundances of the remaining non-marker genes in the transcriptome. For pathway scores we have, 
 \[
-\mathbb{E}[s|z_m] = \mu_{s|z_m} = \hat{\mu}_s + \left(z_m - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s}
+\mathbb{E}[s|z_m] = \mu_{s|z_m} = \hat{\mu}_s + \left(z_m - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s}.
 \]
+Here, $\hat{\mu}_s $ and $\hat{\sigma}_{z_{m},s}$ represent estimates of the unconditional mean of $s$ and the cross-covariance matrix between $z_m$ and $s$. These are learned from the training data. 
 
+For the remaining, non-marker genes in the transcriptome we have,
+\begin{align*}
+\mathbb{E}[t_{ij}  | z_{im}] & =  \int_{-\infty}^\infty \mathbb{E}[t_{ij} | z_{ij}] p(z_{ij} | z_{im})  \textrm{d}z_{ij} \\
+& = \int_{-\infty}^\infty \exp(z_{ij}) \mathcal{N}(z_{ij} | \mu_{z_{ij} | z_{im}}, \Sigma_{z_{ij} | z_{im}} ) \textrm{d}z_{ij} \\
+& = \mathbb{E}_{\mathcal{N}}[\exp(z_{ij}) | z_{im}]
+\end{align*}
+Recall the Moment Generating Function of a Normal random variable $X$ with mean $\mu$ and variance $\sigma^2$ is given by $M(t) = \mathbb{E}[\exp(tX)] = \exp(\mu t + \sigma^2t^2/2)$. Therefore we have, 
+\[
+\mathbb{E}[t_{ij}  | z_{im}] = \mathbb{E}_{\mathcal{N}}[\exp(z_{ij}) | z_{im}] = M(1) = \exp \left( \mu_{z_{ij} | z_{im}} + \frac{1}{2}\Sigma_{z_{ij} | z_{im}} \right)
+\]
+where, 
+\begin{align*}
+\mu_{z_{ij} | z_{im}} &=  \hat{\mu}_j + \left(z_{im} - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},z_j} \\
+\Sigma_{z_{ij} | z_{im}} &=  \hat{\sigma}_{jj} -  \hat{\sigma}_{z_{m},z_j}^T\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},z_j}
+\end{align*}
+Here, $\hat{\mu}_j $ and $\hat{\sigma}_{z_{m},z_j}$ represent estimates of the unconditional mean of $z_j$ and the cross-covariance matrix between $z_m$ and $z_j$. These are learned from the training data. 
 
 \section{Properties of the CP-MVN hierarchical model}
 Mean-Variance and overdispersion. Noise correction/buffering. Skewness
