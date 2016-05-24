@@ -133,9 +133,11 @@ if false;
 end
 
 % PCA plots for main figures
-if true
+if false
     load('NCBI_SRA_Athaliana_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
+    s = lY*coef(:,1:100);
+    pc_convergence_plot( s, qt, pexp );
 end
 
 % PCA plots by submission, for supplemental figures

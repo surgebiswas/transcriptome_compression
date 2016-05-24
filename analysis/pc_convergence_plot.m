@@ -1,5 +1,6 @@
 function  pc_convergence_plot( s, qt, pexp )
 
+sf = get_standard_figure_font_sizes;
 
 dn = qt.release_date_num;
 udn = unique(qt.release_date_num);

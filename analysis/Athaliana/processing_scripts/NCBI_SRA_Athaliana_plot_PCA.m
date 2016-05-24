@@ -1,7 +1,7 @@
 function NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
 
 sf = get_standard_figure_font_sizes;
-MSIZE = 15;
+MSIZE = 30;
 UNANNOTSCALE = 5;
 LEGENDFONTSIZE = 10;
 SAVEFORBLACKBACKGROUND = false;
@@ -48,43 +48,52 @@ s = lY*coef(:,1:3);
     colors = {[210,22,30]/256, [218,165,32]/256, [15 243 61]/256, ...
         [243, 236, 15]/256, [15 150 159]/256, [0.7 0.7 0.7]};
 
-    figure;
-    hold on
+    for j = 1 : 2
+        figure;
+        hold on
 
-    for i = 1 : length(tissues)
-        k = steq(qt.tissue, tissues{i});
-        norm_msizes =  (s(k,os) - minos)./(maxos - minos);
-        msizes = (MAXMSIZE - MINMSIZE)*norm_msizes + MINMSIZE;
+        for i = 1 : length(tissues)
+            k = steq(qt.tissue, tissues{i});
+            norm_msizes =  (s(k,os) - minos)./(maxos - minos);
+            msizes = (MAXMSIZE - MINMSIZE)*norm_msizes + MINMSIZE;
+
+            if strcmpi(tissues{i}{1}, 'unannotated')
+                msizes = msizes/UNANNOTSCALE;
+            end
+
+            if SAVEFORBLACKBACKGROUND
+                h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', 1 - colors{i}, ...
+                    'MarkerEdgeColor', 'w', 'LineWidth', 0.5);
+            else
+                h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', colors{i}, ...
+                    'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
+            end
+
+
+        end
+
+        %grid on
         
-        if strcmpi(tissues{i}{1}, 'unannotated')
-            msizes = msizes/UNANNOTSCALE;
+        if j == 1
+            l = legend(h, {'seed/endosperm', 'flower/floral bud/carpel', 'leaves/shoot', 'root', 'seedling', 'annotation pending'}, 'Location', 'NorthEastOutside');
+            set(l, 'Box', 'off');
+            set(l, 'FontSize', LEGENDFONTSIZE);
         end
         
-        if SAVEFORBLACKBACKGROUND
-            h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', 1 - colors{i}, ...
-                'MarkerEdgeColor', 'w', 'LineWidth', 0.5);
-        else
-            h(i) = scatter3(s(k,1), s(k,2), s(k,3), msizes, 'MarkerFaceColor', colors{i}, ...
-                'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
-        end
-
-
+        
+        axis square
+        box on
+        xlabel(sprintf('PC1 (%0.1f%%)', pexp(1)), 'FontSize', sf.axis_labels);
+        ylabel(sprintf('PC2 (%0.1f%%)', pexp(2)), 'FontSize', sf.axis_labels);
+        zlabel(sprintf('PC3 (%0.1f%%)', pexp(3)), 'FontSize', sf.axis_labels);
+        %set(gca, 'FontSize', sf.axis_tick_labels);
+        set(gca, 'XTick', []);
+        set(gca, 'YTick', []);
+        set(gca, 'ZTick', []);
+        set(gca, 'TickLength', [0 0]);
+        
+        if j == 1; plotSave('figures/pca/NCBI_SRA_Athaliana_PCA_legend.png'); close; end
     end
-
-    %grid on
-    axis square
-    box on
-    xlabel(sprintf('PC1 (%0.1f%%)', pexp(1)), 'FontSize', sf.axis_labels);
-    ylabel(sprintf('PC2 (%0.1f%%)', pexp(2)), 'FontSize', sf.axis_labels);
-    zlabel(sprintf('PC3 (%0.1f%%)', pexp(3)), 'FontSize', sf.axis_labels);
-    l = legend(h, {'seed/endosperm', 'flower/floral bud/carpel', 'leaves/shoot', 'root', 'seedling', 'annotation pending'}, 'Location', 'NorthEastOutside');
-    set(l, 'Box', 'off');
-    set(l, 'FontSize', LEGENDFONTSIZE);
-    set(gca, 'FontSize', sf.axis_tick_labels);
-    set(gca, 'XTick', []);
-    set(gca, 'YTick', []);
-    set(gca, 'ZTick', []);
-    set(gca, 'TickLength', [0 0]);
     
     
     % 1 vs 2, 2 vs 3, 1 vs 3, mix1

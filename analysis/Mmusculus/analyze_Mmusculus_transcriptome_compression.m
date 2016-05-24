@@ -123,9 +123,11 @@ if false;
 end
 
 % PCA first 1-3 dimensions.
-if true
+if false
     load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
+    s = lY*coef(:,1:100);
+    pc_convergence_plot( s, qt, pexp )
 end
 
 
