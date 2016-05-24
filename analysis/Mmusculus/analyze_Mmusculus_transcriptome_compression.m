@@ -89,7 +89,15 @@ if false
     return;
 end
 
+
+
 load(mainDataFile);
+if false
+    lY = lag_dataset(Y'.*repmat(qt.spots,1,size(Y,1))/1000000, qt.spots/1000000);
+    save(mainDataFile, 'lY', '-append');
+    return;
+end
+
 qt = NCBI_SRA_Mmusculus_build_and_analyze_query_table( qtfile ); % Load the query table
 qt = qt(sids,:);
 
@@ -99,7 +107,7 @@ sp = reshape([splits{:}], 2, length(tids))';
 stids = tids;
 tids = sp(:,2);
 
-lY = log10(Y' + 0.1);
+%lY = log10(Y' + 0.1);
 
 
 % Number of HQ transcriptomes in the SRA as a function of time.
@@ -115,7 +123,7 @@ if false;
 end
 
 % PCA first 1-3 dimensions.
-if false
+if true
     load('NCBI_SRA_Mmusculus_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Mmusculus_plot_PCA( lY, coef, qt, pexp )
 end

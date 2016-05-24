@@ -95,10 +95,10 @@ s = lY*coef(:,1:3);
         buffer_axis;
         
         if SAVEFORBLACKBACKGROUND
-            plotSave(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
-            iminvert(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
+            plotSave(sprintf('figures/pca/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
+            iminvert(sprintf('figures/pca/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f_for_black.png', viewpoints(i,1), viewpoints(i,2)));
         else
-            plotSave(sprintf('figures/PCA/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f.png', viewpoints(i,1), viewpoints(i,2)));
+            plotSave(sprintf('figures/pca/NCBI_SRA_Athaliana_PCA_az_%0.0f_el_%0.0f.png', viewpoints(i,1), viewpoints(i,2)));
         end
         
     end

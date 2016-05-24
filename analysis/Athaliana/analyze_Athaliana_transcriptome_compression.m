@@ -97,8 +97,16 @@ if false;
     return; 
 end
 
+
+
 load(mainDataFile);
-lY = log10(Y' + 0.1);
+if false
+    lY = lag_dataset(Y'.*repmat(qt.spots,1,size(Y,1))/1000000, qt.spots/1000000);
+    save(mainDataFile, 'lY', '-append');
+end
+
+
+%lY = log10(Y' + 0.1);
 
 % Number of HQ transcriptomes in the SRA as a function of time.
 if false
@@ -125,7 +133,7 @@ if false;
 end
 
 % PCA plots for main figures
-if false
+if true
     load('NCBI_SRA_Athaliana_PCA_pexp_vs_eigengene_params.mat');
     NCBI_SRA_Athaliana_plot_PCA( lY, coef, qt, pexp )
 end
