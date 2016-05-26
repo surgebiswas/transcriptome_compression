@@ -286,13 +286,22 @@ if false
 end
 
 % Gene set analysis.
-if false
+if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
 %     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
 %     [sY, train_mu, train_sig] = standardize(lY);
 %     [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
 %     save('NCBI_SRA_Athaliana_gene_set_PC_coefs.mat', 'ngenes', 'engenes', 'pexp', 'gscoef', 'train_mu', 'train_sig');
     
+    if true
+        t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
+        o = qt.spots/1000000;
+        nfolds = 20;
+        
+        results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
+        save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
+    end
+
     if false 
         trainfun = @ridgefit_train;
         predfun = @ridgefit_predict;

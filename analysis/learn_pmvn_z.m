@@ -1,4 +1,4 @@
-function [ z ] = learn_pmvn_z( t, mu, Sigma, offset )
+function [ z, o ] = learn_pmvn_z( t, mu, Sigma, offset, varargin )
 
 % t is observations x variables
 % mu is 1 x variables
@@ -7,7 +7,7 @@ function [ z ] = learn_pmvn_z( t, mu, Sigma, offset )
 %
 % Model: z ~ Normal(mu, Sigma); t ~ Poisson(exp(z)*offset)
 %offset = repmat(offset,1,size(t,2));
-z = log(t+1) - repmat(log(offset),1, size(t,2)); %mvnrnd(mu, Sigma, size(t,1));
+z = setParam(varargin, 'z', log(t./repmat(offset,1, size(t,2))+1) ); %mvnrnd(mu, Sigma, size(t,1));
 
 %optim_opts = optimoptions('fminunc','Algorithm','trust-region', ...
 %    'SpecifyObjectiveGradient',true, 'HessianFcn', 'objective');
@@ -35,7 +35,7 @@ while delta > 1e-6
     old_o = o;
     o = objective(t, z, offset, mu, Sigma);
     delta = o - old_o;
-    fprintf('Objective: %0.6f\n', o);
+    %fprintf('Objective: %0.6f\n', o);
 end
 
     function o = objective(t, z, o, mu, S)

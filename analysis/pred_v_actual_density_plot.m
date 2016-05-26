@@ -34,13 +34,13 @@ function f = pred_v_actual_density_plot(ytrue, yhat, varargin)
     caxis([0 1]);
     axis([-3 3 -3 3])
     axis square;
-    colormap(parula); % cbrewer('seq', 'Purples', 100, 'cubic') 
+    colormap(flipud(hot)); % cbrewer('seq', 'Purples', 100, 'cubic') 
     xlabel('Predicted expression', 'FontSize', sf.axis_labels);
     ylabel('Actual expression', 'FontSize', sf.axis_labels);
     set(gca, 'FontSize', sf.axis_tick_labels);
 
     txt = text(-2.8, 2.5, sprintf('Avg. PCC = %0.2f', avgPCC));
     set(txt, 'FontSize', sf.axis_tick_labels+6);
-    set(txt, 'Color', 'w');
+    set(txt, 'Color', 'k');
 
 end

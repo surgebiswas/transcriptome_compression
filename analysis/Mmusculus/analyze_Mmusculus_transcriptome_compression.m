@@ -183,12 +183,21 @@ end
 
 
 % Gene set analysis.
-if false
+if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
+    if true
+        t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
+        o = qt.spots/1000000;
+        nfolds = 20;
+        
+        results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
+        save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
+    end
+    
     % Training on the full data.
     % This is the full model to use for future experiments.
-    if true
+    if false
         l = logspace(-6,-2,19);
         params = {l(7), false, false}; %l(7) selected from earlier cross validation.
         trainfun = @ridgefit_train;
