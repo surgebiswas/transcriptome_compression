@@ -18,6 +18,7 @@ end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Athaliana/'];
 path(genpath([homedir, '/GitHub/', repo]), path);
+path(genpath([homedir, '/GitHub/latent_log']), path);
 cd(datadir);
 tic;
 
@@ -286,14 +287,24 @@ if false
 end
 
 % Gene set analysis.
-if true
+if false
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
 %     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
 %     [sY, train_mu, train_sig] = standardize(lY);
 %     [ys, ngenes, engenes, pexp, gscoef] = collapse_to_gene_sets(sY, tids, sets);
 %     save('NCBI_SRA_Athaliana_gene_set_PC_coefs.mat', 'ngenes', 'engenes', 'pexp', 'gscoef', 'train_mu', 'train_sig');
     
+    
+    % Train a full, final model.
     if true
+        t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
+        o = qt.spots/1000000;
+        model = tradict_train_pmvn(t, o, tids, sets);
+        save('NCBI_SRA_Athaliana_final_tradict_model.mat', 'model');
+    end
+
+
+    if false
         t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
         o = qt.spots/1000000;
         nfolds = 20;

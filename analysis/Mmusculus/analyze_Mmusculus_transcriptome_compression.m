@@ -192,7 +192,7 @@ if true
         nfolds = 20;
         
         results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
-        save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
+        save('NCBI_SRA_Mmusculus_evaluate_prospective_performance_3_results.mat', 'results', '-v7.3');
     end
     
     % Training on the full data.

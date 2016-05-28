@@ -44,7 +44,11 @@ if false
     
     sids_jbm = get(dc_sub, 'VarNames');
     tids_jbm = get(dc_sub, 'ObsNames');
-    lY_jbm = log10(double(dc_sub)' + 0.1);
+    lY_jbm = log(double(dc_sub)' + 0.1);
+    %lY_jbm = bsxfun(@minus, bsxfun(@minus, lY_jbm, mean(lY_jbm)), -mean(lY));
+    
+    Y_jbm = double(dc_sub)';
+    
     
     % Design matrix
     xd = dataset('file', 'JBM_design.txt', 'ReadObsNames', true, 'ReadVarNames', true);
@@ -56,8 +60,19 @@ if false
     xd.geno(strcmpi(xd.geno, 'HopBB1-10')) = {'35S:HopBB1'};
     xd.geno(strcmpi(xd.geno, 'oxJAZ3')) = {'35S:JAZ3'};
     
+    % Add sample depths
+    w = dataset('file', 'sample_depths_x4_formatted.txt', 'ReadObsNames', false, 'ReadVarNames', false); % FastQ line counts.
+    s2d = containers.Map;
+    for i = 1 : size(w,1)
+        s2d(w.Var2{i}) = w.Var1(i)/4;
+    end
+    xd.depth = zeros(size(xd,1),1);
+    o = get(xd, 'ObsNames');
+    for i = 1 : size(xd,1)
+        xd.depth(i) = s2d(o{i});
+    end
     
-    save('JBM_data_processed.mat', 'sids_jbm', 'tids_jbm', 'lY_jbm', 'xd');
+    save('JBM_data_processed.mat', 'sids_jbm', 'tids_jbm', 'lY_jbm', 'xd', 'Y_jbm');
     
     % Some quick exploratory analysis
     s = cmdscale(pdist(standardize(lY_jbm), 'spearman'));
@@ -101,7 +116,18 @@ end
 
 load('JBM_data_processed.mat');
 
-% Load/train a tradict model.
+% Load fully trained tradict model.
+if false
+    load('~/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_final_tradict_model.mat');
+    
+    t_m = Y_jbm(:, model.S).*repmat(xd.depth/1000000,1, length(model.S));
+    o = xd.depth/1000000;
+    
+    [ s_hat, Y_jbm_hat, z_hat ] = tradict_predict_pmvn( t_m, o, model );
+    save('jbm_tradiction.mat', 's_hat', 't_hat', 'z_hat');
+end
+
+% Load fully trained tradict model. Old version - DEPRECATED
 if false
     % For now we will use an old set of markers obtained using OMP.
     load('/Users/sbiswas/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_full_data_up_to_06Sept2015_quality_filtered.mat');
@@ -176,7 +202,102 @@ if false
 end
 
 % Using knowledge based Gene sets.
-if true 
+if true
+    load('JBM_tradiction.mat');
+    load('~/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_final_tradict_model.mat');
+    load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
+    
+    t = Y_jbm.*repmat(xd.depth/1000000,1, size(Y_jbm,2));
+    o = xd.depth/1000000;
+    
+    z = lag_dataset(t, o, 'priors', model.lag_priors);
+    zs = standardize(z, 'mu', model.train_mu, 'std', model.train_sig);
+    s = zs*model.geneset.coef;
+    
+    % Process heatmaps
+    [ci, s_used_true] = build_jbm_heatmaps_1( xd, s, 'rep_to_use', 1 );
+    plotSave('process_heatmap_true_rep_1.png');
+    close
+    
+    [~, s_used_pred] = build_jbm_heatmaps_1( xd, s_hat, 'rep_to_use', 1, 'use_column_indices', ci);
+    plotSave('process_heatmap_predicted_rep_1.png');
+    close
+    
+    qd = dataset('file', 'bio_processes_coarse_annotations.txt', 'ReadVarNames', false, 'ReadObsNames', false);
+    v = zeros(size(qd,1),1) - 1;
+    cmap = lines; cmap = cmap(61:63,:); cmap(2,:) = [1 0 1];
+    v( strcmpi(qd.Var2, 'metabolism') ) = 0;
+    v( strcmpi(qd.Var2, 'development') ) = 1;
+    v( strcmpi(qd.Var2, 'response_to_stimuli') ) = 2;
+    imagesc(v(ci)); colormap(cmap);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    daspect([1 10 1]);
+    plotSave('process_coarse_key.png'); close;
+    
+    
+    % JA response characterization
+    jaidx = find(strcmpi(setnames(:,1), 'response to jasmonic acid'));
+    jbm_marker_plot(s(:,jaidx), s_hat(:,jaidx), xd, 'MeJA', {'coi1-16', 'npr1-1', 'Col-0', '35S:HopBB1', 'eds16-1'}, ... 
+        ['JA response pathway score'], 'rep_to_use', 1);
+    plotSave('JA_pathway_scores_pred_v_actual.png'); close;
+    
+    tpmcmap = cbrewer('seq', 'YlOrRd', 64);
+    
+    mejad = dataset('file', 'MeJA_up_Col-0_JBM.txt', 'ReadVarNames', false, 'ReadObsNames', false);
+    mask = steq(tids_jbm, mejad.Var1);
+    [ci, t_used_true] = build_jbm_heatmaps_1( xd, Y_jbm(:,mask), 'rep_to_use', 1 , ...
+        'treatments', {'MeJA'}, 'colormap', tpmcmap, 'standardize', true, 'caxis', [-1 3]);
+    plotSave('JA_responsive_genes_actual_heatmap.png'); close
+    
+    [~, t_used_pred] = build_jbm_heatmaps_1( xd, Y_jbm_hat(:,mask), 'rep_to_use', 1 , ...
+        'treatments', {'MeJA'}, 'colormap', tpmcmap, 'standardize', true, 'caxis', [-1 3], ...
+        'use_column_indices', ci);
+    plotSave('JA_responsive_genes_predicted_heatmap.png'); close
+    
+    
+    % SA response characterization
+    saidx = find(strcmpi(setnames(:,1), 'response to salicylic acid'));
+    jbm_marker_plot(s(:,saidx), s_hat(:,saidx), xd, 'BTH', {'coi1-16', 'npr1-1', 'Col-0', '35S:HopBB1', 'eds16-1'}, ... 
+        ['SA response pathway score'], 'rep_to_use', 1);
+    plotSave('SA_pathway_scores_pred_v_actual.png'); close;
+    
+    bthd = dataset('file', 'BTH_up_Col-0.txt', 'ReadVarNames', false, 'ReadObsNames', false);
+    mask = steq(tids_jbm, bthd.Var1);
+    [ci, t_used_true] = build_jbm_heatmaps_1( xd, Y_jbm(:,mask), 'rep_to_use', 1 , ...
+        'treatments', {'BTH'}, 'colormap', tpmcmap, 'standardize', true, 'caxis', [-1 3]);
+    plotSave('SA_responsive_genes_actual_heatmap.png'); close
+    
+    
+    [~, t_used_pred] = build_jbm_heatmaps_1( xd, Y_jbm_hat(:,mask), 'rep_to_use', 1 , ...
+        'treatments', {'BTH'}, 'colormap', tpmcmap, 'standardize', true, 'caxis', [-1 3], ...
+        'use_column_indices', ci);
+    plotSave('SA_responsive_genes_predicted_heatmap.png'); close
+    
+    % Differential pathway and gene expression analysis.
+    % Pathways
+    cm = parula;
+    [pja, psa] = jbm_DE_analysis(s, xd);
+    [pjah, psah] = jbm_DE_analysis(s_hat, xd);
+    
+    [sx, sy, in] = jbm_plot_venn(pja, pjah, cm, 'JA_pathway_DE_venn.png')
+    [sx, sy, in] = jbm_plot_venn(psa, psah, cm, 'SA_pathway_DE_venn.png')
+    
+    
+    mz = mean(z);
+    [gja, gsa] = jbm_DE_analysis(z(:,mz > 0), xd);
+    [gjah, gsah] = jbm_DE_analysis(z_hat(:, mz > 0), xd);
+    
+    [sx, sy, in] = jbm_plot_venn(gja, gjah, cm, 'JA_genes_DE_venn.png')
+    [sx, sy, in] = jbm_plot_venn(gsa, gsah, cm, 'SA_genes_DE_venn.png')
+    
+end
+
+
+
+% Using knowledge based Gene sets. Old version - DEPRECATED
+if false 
     load('JBM_tradiction.mat');
     load('~/Documents/surge/science/gene_ontology/Athaliana_representative_gene_set_01-Mar-2016.mat');
     load('/Users/sbiswas/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_gene_set_PC_coefs.mat');
