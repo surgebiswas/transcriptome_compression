@@ -39,12 +39,14 @@ function f = pred_v_actual_density_plot(ytrue, yhat, varargin)
     rdensity = tdensity( (density - min(min(density)))/max(max(density)) );
     [hc, hc] = contourf(X,Y,rdensity,100);
     set(hc, 'LineStyle', 'none')
-    colorbar
-    caxis([0 1]);
+    %colorbar
+    %caxis([0 1]);
     axis([-3 3 -3 3])
     axis square;
     colormap(flipud(hot)); %
     %colormap(cbrewer('seq', 'YlOrRd', 100, 'cubic') )
+    set(gca, 'XTick', [-3:3]);
+    set(gca, 'YTick', -3:3);
     xlabel('Predicted expression', 'FontSize', sf.axis_labels + fontadd);
     ylabel('Actual expression', 'FontSize', sf.axis_labels + fontadd);
     set(gca, 'FontSize', sf.axis_tick_labels + fontadd);

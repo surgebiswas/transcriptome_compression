@@ -28,11 +28,18 @@ function  analyze_prosperf3_results( results, qt )
     set(gca, 'XTick', []);
     set(gca, 'YTick', []);
     set(gca, 'TickLength', [0 0]);
-    daspect([1 30*(20847/2597)*(150/368) 1]);
-    plotSave('figures/prospective_performance/process_heatmap.png')
+    daspect([1 30*(size(results.target_proc,1)/2597)*(150/size(results.target_proc,2)) 1]);
+    plotSave('figures/prospective_performance/process_heatmap_true.png')
     close
     
-    
+     
+    imagesc(standardize(results.pred_proc(ri,ci)), [-2 2]); colormap(parula);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    daspect([1 30*(size(results.target_proc,1)/2597)*(150/size(results.target_proc,2)) 1]);
+    plotSave('figures/prospective_performance/process_heatmap_pred.png')
+    close
     
     
     

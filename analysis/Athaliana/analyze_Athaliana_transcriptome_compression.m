@@ -287,7 +287,7 @@ if false
 end
 
 % Gene set analysis.
-if false
+if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
 %     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
 %     [sY, train_mu, train_sig] = standardize(lY);
@@ -296,7 +296,7 @@ if false
     
     
     % Train a full, final model.
-    if true
+    if false
         t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
         o = qt.spots/1000000;
         model = tradict_train_pmvn(t, o, tids, sets);
@@ -304,7 +304,7 @@ if false
     end
 
 
-    if false
+    if true
         if false
             t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
             o = qt.spots/1000000;
@@ -313,6 +313,7 @@ if false
             results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
             save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
         else
+            load('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat')
             analyze_prosperf3_results( results, qt );
         end
     end
