@@ -7,9 +7,10 @@
             ssize = sum(kk);
             nsamples(kk) = ssize;
             if ssize == 1
-                sy(kk,:) = nan;
+                sy(kk,:) = zeros(1, size(y,2));
             else
-                sy(kk,:) = standardize(y(kk,:));
+                %sy(kk,:) = standardize(y(kk,:));
+                sy(kk,:) = bsxfun(@minus, y(kk,:), mean(y(kk,:),1));
             end
         end
     end

@@ -305,12 +305,16 @@ if false
 
 
     if false
-        t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
-        o = qt.spots/1000000;
-        nfolds = 20;
-        
-        results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
-        save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
+        if false
+            t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
+            o = qt.spots/1000000;
+            nfolds = 20;
+
+            results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
+            save('NCBI_SRA_Athaliana_evaluate_prospective_performance_3_results.mat', 'results');
+        else
+            analyze_prosperf3_results( results, qt );
+        end
     end
 
     if false 

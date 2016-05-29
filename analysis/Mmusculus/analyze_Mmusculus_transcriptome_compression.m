@@ -187,12 +187,17 @@ if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 
     if true
-        t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
-        o = qt.spots/1000000;
-        nfolds = 20;
-        
-        results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
-        save('NCBI_SRA_Mmusculus_evaluate_prospective_performance_3_results.mat', 'results', '-v7.3');
+        if false
+            t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
+            o = qt.spots/1000000;
+            nfolds = 20;
+
+            results = evaluate_prospective_performance_3( t, o, tids, sets, qt, nfolds );
+            save('NCBI_SRA_Mmusculus_evaluate_prospective_performance_3_results.mat', 'results', '-v7.3');
+        else
+            load('NCBI_SRA_Mmusculus_evaluate_prospective_performance_3_results.mat');
+            analyze_prosperf3_results( results, qt );
+        end
     end
     
     % Training on the full data.
