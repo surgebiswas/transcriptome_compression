@@ -1,0 +1,7 @@
+\contentsline {section}{\numberline {1}Preliminaries}{1}
+\contentsline {section}{\numberline {2}Model}{1}
+\contentsline {section}{\numberline {3}Encoding}{2}
+\contentsline {subsection}{\numberline {3.1}Inference of $z_m$ given $\mu ^{(m)}$ and $\Sigma ^{(m)}$}{3}
+\contentsline {subsection}{\numberline {3.2}Complete inference of $\mu ^{(m)}$, $\Sigma ^{(m)}$, and $z_m$}{4}
+\contentsline {section}{\numberline {4}Decoding}{5}
+\contentsline {section}{\numberline {5}References}{5}

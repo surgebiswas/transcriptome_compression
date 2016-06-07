@@ -18,7 +18,11 @@ if false
     Y = s.tpm;
     [all_tids, Y] = collapse_mouse_isoform_table(s.transcript_id, Y);
 
+    qt = read_ncbi_sra_query_table('SRA248232_query_table.csv');
     o = get(xdu, 'ObsNames');
+    qts = qt(o,:);
+    xdu.depth = qts.spots;
+    
     [~, samples_to_keep] = ismember(o, s.ids);
     [~, genes_to_keep] = ismember(tids, all_tids);
 
@@ -36,8 +40,9 @@ if false
     Yt(:,torm) = [];
     %sids(torm) = [];
     xd(torm,:) = [];
+    Yt = Yt';
 
-    lY = log10(Yt' + 0.1);
+    lY = log10(Yt + 0.1);
 
 
     % Remove samples with that belong to poorly represented KOs. 
@@ -55,6 +60,7 @@ if false
     torm = steq(xd.KO, genos_torm);
     xd(torm,:) = [];
     lY(torm,:) = [];
+    Yt(torm,:) = [];
     
     
     % Add pathway and regulator class information
@@ -109,9 +115,14 @@ if false
     torm = (xd.reg_class == 0 & ~strcmpi(xd.KO, 'none')) | ~strcmpi(xd.condition, 'NA') | xd.reg_class == -1;
     xd(torm,:) = [];
     lY(torm,:) = [];
+    Yt(torm,:) = [];
     
+    xd.treatment = regexprep(xd.treatment, 'LPS  ', 'LPS ');
     
-    save('parnas_processed.mat', 'lY', 'xd', 'tids');
+    xd.source_name = regexprep(xd.source_name, 'T\d', '');
+    us = unique(xd.source_name);
+    
+    save('parnas_processed.mat', 'lY', 'Yt', 'xd', 'tids');
 else
     load('parnas_processed.mat');
     
@@ -120,38 +131,106 @@ end
 load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
 load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_final_tradict_model_marker_genes_expression_mat.mat');
 load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmmusculus_final_tradict_model.mat');
-xd.treatment = regexprep(xd.treatment, 'LPS  ', 'LPS ');
+
 
 splits = regexpi(tids, ',', 'split');
 sp = reshape([splits{:}], 2, length(tids))';
 stids = tids;
 tids = sp(:,2);
 
-% Estimate major effects
-[~, s] = pca(lY, 'NumComponents', 10);
-batch1 = s(:,1) < -20;
-batch2 = s(:,1) > -20 & s(:,3) < -4;
-batch3 = s(:,1) > -20 & s(:,3) > -4 & s(:,3) < 7.2;
-batch4 = s(:,1) > -20 & s(:,3) > 7.2;
-treat = zeros(size(lY,1),1);
-treat(strcmpi(xd.treatment, 'LPS  2 hours')) = 1;
-treat(strcmpi(xd.treatment, 'LPS  4 hours')) = 2;
-treat(strcmpi(xd.treatment, 'LPS  6 hours')) = 3;
+% Create the design matrix for batch effect correction.
+if true % leave as true
+    % Estimate major effects
+    [~, ss] = pca(lY, 'NumComponents', 10);
+    batch1 = ss(:,1) < -20;
+    batch2 = ss(:,1) > -20 & ss(:,3) < -4;
+    batch3 = ss(:,1) > -20 & ss(:,3) > -4 & ss(:,3) < 7.2;
+    batch4 = ss(:,1) > -20 & ss(:,3) > 7.2;
+    treat = zeros(size(lY,1),1);
+    treat(strcmpi(xd.treatment, 'LPS 2 hours')) = 1;
+    treat(strcmpi(xd.treatment, 'LPS 4 hours')) = 2;
+    treat(strcmpi(xd.treatment, 'LPS 6 hours')) = 3;
+    
+    %xeff = [ones(length(batch1),1), batch1, batch2, batch3, treat];
+    xeff = [ones(length(batch1),1), batch1, treat];
+end
 
-xeff = [ones(length(batch1),1), batch1, batch2, batch3, treat];
+
+% Form the predictions and lag the actual.
+load('~/GitHub/data/transcriptome_compression/Mmusculus/NCBI_SRA_Mmusculus_final_tradict_model.mat');
+if false
+
+    t_m = Yt(:, model.S).*repmat(xd.depth/1000000,1, length(model.S));
+    o = xd.depth/1000000;
+
+    [ s_hat, Yt_hat, z_hat ] = tradict_predict_pmvn( t_m, o, model );
+    [ s_hat_d, Yt_hat_d, z_hat_d] = tradict_predict_pmvn( t_m, o, model, 'learn_latent_diag', true);
+    save('parnas_tradiction.mat', 's_hat', 'Yt_hat', 'z_hat');
+end
+
+% Do comparison 
+load('parnas_tradiction.mat')
+
+% Create the actual gene-set scores
+if true
+    t = Yt.*repmat(xd.depth/1000000,1, size(Yt,2));
+    o = xd.depth/1000000;
+    
+    z = lag_dataset(t, o, 'priors', model.lag_priors);
+    zs = standardize(z, 'mu', model.train_mu, 'std', model.train_sig);
+    s = zs*model.geneset.coef;
+    
+    
+    
+end
 
 
-% Gene set adjustments - actual
-gY = lY*model.geneset.coef;
-b = estimate_effects(xeff, gY);
-gYadj = gY - xeff(:,2:4)*b(2:4,:);
-sya = standardize(gYadj);
 
-% All genes adjustments - actual
-b = estimate_effects(xeff, lY);
-lYadj = lY - xeff(:,2:4)*b(2:4,:);
-lya = standardize(lYadj);
 
+
+
+% Gene set adjustments 
+sa = parnas_batch_correct(xeff, s, 2);
+s_hata = parnas_batch_correct(xeff, s_hat, 2);
+%s_hata_d = parnas_batch_correct(xeff, s_hat_d, 2);
+
+sas = standardize(sa);
+s_hatas = standardize(s_hata);
+%s_hatas_d = standardize(s_hata_d);
+
+% Gene adjustments
+za = parnas_batch_correct(xeff, z, 2);
+z_hata = parnas_batch_correct(xeff, z_hat, 2);
+
+
+
+% plot for response to LPS
+if true
+    cm = lines;
+    ut = unique(xd.treatment); ut = [ut(4); ut(1:3)];
+    lpsi = find(strcmpi(setnames(:,1), 'cellular response to lipopolysaccharide'));
+    
+    hold on
+    for i = 1 :length(ut)
+        m = strcmpi(xd.treatment, ut{i});
+        l(i) = plot(s_hatas(m,lpsi), sas(m,lpsi), 'o', 'MarkerFaceColor', cm(i,:), 'Color', cm(i,:));
+        disp(corr(sas(m,lpsi), s_hatas(m,lpsi), 'type', 'spearman'));
+    end
+    
+    sf = get_standard_figure_font_sizes;
+    axis square;
+    legend(l, ut, 'Location', 'SouthEast');
+    axis([-2.5 2.5 -2.5 2.5]);
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    xlabel('Predicted score', 'FontSize', sf.axis_labels);
+    ylabel('Actual score', 'FontSize', sf.axis_labels);
+    plotSave('LPS_pathway_score.png'); close;
+    
+    
+    
+    
+    
+end
 
 
 
@@ -164,25 +243,25 @@ lya = standardize(lYadj);
 % 
 % % Sigma = cov(zhat);
 % % mu = mean(zhat);
-% % zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
+% % % zhat = learn_pmvn_z(t, mu, Sigma, ones(size(t,1),1));
+% % 
+% % lY_c = log10(exp(zhat) + 0.1);
 % 
-% lY_c = log10(exp(zhat) + 0.1);
-
-% Gene set adjustments - predicted
-gYh = ridgefit_predict(lY(:,model.S), model.fit); % ow lY(:,model.S)
-b = estimate_effects(xeff, gYh);
-gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
-syha = standardize(gYhadj);
-
-% Gene set adjustments - actual
-lYh = ridgefit_predict(lY(:,model.S), model.fit_allgenes); % ow lY(:,model.S)
-b = estimate_effects(xeff, lYh);
-lYhadj = lYh - xeff(:,2:4)*b(2:4,:);
-lyha = standardize(lYhadj);
+% % Gene set adjustments - predicted
+% gYh = ridgefit_predict(lY(:,model.S), model.fit); % ow lY(:,model.S)
+% b = estimate_effects(xeff, gYh);
+% gYhadj = gYh - xeff(:,2:4)*b(2:4,:);
+% syha = standardize(gYhadj);
+% 
+% % Gene set adjustments - actual
+% lYh = ridgefit_predict(lY(:,model.S), model.fit_allgenes); % ow lY(:,model.S)
+% b = estimate_effects(xeff, lYh);
+% lYhadj = lYh - xeff(:,2:4)*b(2:4,:);
+% lyha = standardize(lYhadj);
 
 
 
-if true
+if false
     ir = {
     'immune response';
     'neutrophil chemotaxis';
@@ -208,7 +287,8 @@ if true
     'cellular response to lipopolysaccharide';
     'innate immune response';
     'positive regulation of interleukin-6 production';
-    'positive regulation of NF-kappaB transcription factor activity'};
+    'positive regulation of NF-kappaB transcription factor activity',
+    'response to virus'};
 
     [~,proc2keep] = ismember(ir,setnames(:,1));
 
@@ -228,9 +308,9 @@ if false
     % Build design matrix.
     time = zeros(size(xd,1),1);
     time(strcmpi(xd.treatment, 'No LPS')) = 0; 
-    time(strcmpi(xd.treatment, 'LPS  2 hours')) = 2; 
-    time(strcmpi(xd.treatment, 'LPS  4 hours')) = 4; 
-    time(strcmpi(xd.treatment, 'LPS  6 hours')) = 6; 
+    time(strcmpi(xd.treatment, 'LPS 2 hours')) = 2; 
+    time(strcmpi(xd.treatment, 'LPS 4 hours')) = 4; 
+    time(strcmpi(xd.treatment, 'LPS 6 hours')) = 6; 
     
     rc = xd.reg_class;
     
@@ -239,11 +319,11 @@ if false
     % Build the linear models and obtain p-values]
     % This is a well behaved linear model with two terms and low
     % multicolinearity
-    pval_true = zeros(size(X,2) + 1, size(gYadj,2));
+    pval_true = zeros(size(X,2) + 1, size(sas,2));
     pval_pred = pval_true;
-    for i = 1 : size(gYadj,2)
-        stats_true = regstats(gYadj(:,i), X, 'linear');
-        stats_pred = regstats(gYhadj(:,i), X, 'linear');
+    for i = 1 : size(sas,2)
+        stats_true = regstats(sas(:,i), X, 'linear');
+        stats_pred = regstats(s_hatas(:,i), X, 'linear');
         
         pval_true(:,i) = stats_true.tstat.pval;
         pval_pred(:,i) = stats_pred.tstat.pval;
@@ -260,15 +340,57 @@ if false
     mr = [num2cell([fdr_true(sidx), fdr_pred(sidx)]), setnames(sidx,1)];
     
     
-    
-   
-    
     labels = fdr_true < 0.01;
     scores = 1 - fdr_pred;
-    [xx,yy, ~, auc] = perfcurve(labels, scores, 1);
-    disp(auc)
+    [xx,yy, th, auc] = perfcurve(labels, scores, 1);
+    [~,mind] = min(abs(th - (1 - 0.01)))
     
+    % Figures
+    figure;
+    plot(xx, yy, '-k', 'LineWidth', 3);
+    hold on
+    plot([xx(mind), xx(mind)], [0 yy(mind)], '--r', 'LineWidth', 3);
+    plot([0, xx(mind)], [yy(mind) yy(mind)], '--r', 'LineWidth', 3);
+    plot([xx(mind)], [yy(mind)], 'or', 'MarkerFaceColor', 'r', 'MarkerSize', 12);
+    axis square;
 
+    sf = get_standard_figure_font_sizes;
+    axis([0 1 0 1]);
+    set(gca, 'FontSize', sf.axis_tick_labels);
+    xlabel('Estimated FPR', 'FontSize', sf.axis_labels);
+    ylabel('Estimated TPR', 'FontSize', sf.axis_labels);
+    plotSave('roc_curve.png');
+    close
+    
+    cm = parula;
+    v = venn([sum(fdr_true < 0.01), sum(fdr_pred < 0.01)], sum(fdr_pred < 0.01 & fdr_true < 0.01));
+    set(v(1), 'FaceColor', cm(10,:))
+    set(v(2), 'FaceColor', cm(end-10,:))
+    axis equal
+    axis off
+    plotSave('venn.png');
+    close
+    
+    
+    % heatmaps
+    mask = fdr_pred < 0.01 | fdr_true < 0.01;
+    [pris, ci] = plot_immune_heatmaps(xd, sas(:,mask));
+    plotSave('DE_genesets_heatmap_true.png');
+    close
+    
+    plot_immune_heatmaps(xd, s_hatas(:,mask), 'pris', pris, 'ci', ci);
+    plotSave('DE_genesets_heatmap_predicted.png');
+    close
+    
+    dek = [fdr_pred < 0.01 , fdr_true < 0.01];
+    dek = dek(mask,:);
+    imagesc(1 - dek(ci,:), [0 1]); colormap(gray);
+    set(gca, 'XTick', []);
+    set(gca, 'YTick', []);
+    set(gca, 'TickLength', [0 0]);
+    daspect([1 4 1]);
+    plotSave('DE_annotations.png');
+    close;
 end
 
 

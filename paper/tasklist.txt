@@ -1,0 +1,30 @@
+Timeline/Tasks
+
+To do: 
+- Discussion
+- Conclusion
+- Trim text
+
+
+
+
+Misc:
+- Add box to photomorpho samples in A. thal PCA.
+- Extract representativeness information to supplemental analysis
+- Expression optimization. 
+- Get code in order
+- Discussion points	- Number of reads required, increase in throughput and cost.
+
+Our approach:	- Models RNA-Seq Data(*)	- Markers are expression optimized without sacrificing statistical power. (*)	- Robust (*)	- Looks at the expression of all pathways (*)	- Trained on the largest transcriptomic dataset known to date (*)	- Accurate (*)
+
+
+Future directions:
+- Application of Tradict to a large single-cell dataset.
+
+
+
+Cut Text:
+
+For A. thaliana PC1 was primarily aligned with the physical axis of the plant, with above ground, photosynthetic tissues having lower PC1 scores and below ground, root tissues having higher PC1 scores. 
+
+

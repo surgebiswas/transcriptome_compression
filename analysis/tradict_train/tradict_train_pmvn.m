@@ -2,6 +2,7 @@ function model = tradict_train_pmvn( t, o, tids, sets, varargin )
 
     nmarkers = setParam(varargin, 'nmarkers', 100);
     expdelta = setParam(varargin, 'expression_delta', 0);
+    topN = setParam(varargin, 'topN', false);
 
     % Perform lag
     [zlag, model.lag_priors] = lag_dataset(t, o);
@@ -10,7 +11,7 @@ function model = tradict_train_pmvn( t, o, tids, sets, varargin )
     meanexp = mean(zlag);
     [sY, model.train_mu, model.train_sig] = standardize(zlag);
     model = geneset_cluster( sY, tids, sets, 'stats', model );
-    model = geneset_encode(sY, nmarkers, model, 'expression_delta', expdelta, 'mean_expression', meanexp);
+    model = geneset_encode(sY, nmarkers, model, 'expression_delta', expdelta, 'mean_expression', meanexp, 'topN', topN);
     markers = model.S;
     
     % Learn z_m, \mu^{(m)}, and \Sigma^{(m)}

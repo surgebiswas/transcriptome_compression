@@ -1,9 +1,15 @@
-function [ s_hat, t_hat, z_hat ] = tradict_predict_pmvn( t_m, o, model )
+function [ s_hat, t_hat, z_hat ] = tradict_predict_pmvn( t_m, o, model, varargin )
+
+    ldiag = setParam(varargin, 'learn_latent_diag', false);
 
     % First learn the marker latent abundances.
     mu_m = model.fit.markers.mu;
     Sigma_m = model.fit.markers.Sigma;
-    z_m = learn_pmvn_z(t_m, mu_m, Sigma_m, o);
+    if ldiag
+        z_m = learn_pmvn_z(t_m, mu_m, diag(diag(Sigma_m)), o);
+    else
+        z_m = learn_pmvn_z(t_m, mu_m, Sigma_m, o);
+    end
     
     % Predict gene-set/pathway scores
     mu_s = model.fit.geneset.mu;

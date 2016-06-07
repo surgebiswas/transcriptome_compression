@@ -7,6 +7,7 @@ function [ stats ] = geneset_encode( sY, nmarkers, stats, varargin )
 % a gene long vector of average expressions for each gene.
 expdelta = setParam(varargin, 'expression_delta', 0);
 meanexp = setParam(varargin, 'mean_expression', []);
+topN = setParam(varargin, 'topN', false);
 
 memmat = stats.geneset.coef ~= 0;
 
@@ -15,17 +16,24 @@ R = standardize(stats.geneset.sy_sets);
 Y = R; 
 tvy = tv(Y); tvr = zeros(1,length(nmarkers));
 selected_clusters = zeros(1,length(nmarkers));
-for i = 1 : nmarkers
-    cpunexp = calculate_cluster_unexplained_variance(R,stats);
-    
-    [maxpex, mind] = max(cpunexp);
-    selected_clusters(i) = mind;
-    
-    [S, R] = add_marker_from_geneset_cluster(sY, Y, S,  R, mind, memmat, stats, expdelta, meanexp);
-    
-    tvr(i) = tv(R);
-    
-    fprintf('%0.0f\tPercent unexplained variance: %0.2f\n', i, 100*tvr(i)/tvy);
+
+if ~topN
+    for i = 1 : nmarkers
+        cpunexp = calculate_cluster_unexplained_variance(R,stats);
+
+        [maxpex, mind] = max(cpunexp);
+        selected_clusters(i) = mind;
+
+        [S, R] = add_marker_from_geneset_cluster(sY, Y, S,  R, mind, memmat, stats, expdelta, meanexp);
+
+        tvr(i) = tv(R);
+
+        fprintf('%0.0f\tPercent unexplained variance: %0.2f\n', i, 100*tvr(i)/tvy);
+    end
+else
+    assert(~isempty(meanexp))
+    [~,sind] = sort(meanexp, 'descend');
+    S = sind(1:nmarkers);
 end
 
 stats.S = S;

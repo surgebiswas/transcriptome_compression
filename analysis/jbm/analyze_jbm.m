@@ -117,14 +117,14 @@ end
 load('JBM_data_processed.mat');
 
 % Load fully trained tradict model.
-if false
+if true
     load('~/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_final_tradict_model.mat');
     
     t_m = Y_jbm(:, model.S).*repmat(xd.depth/1000000,1, length(model.S));
     o = xd.depth/1000000;
     
     [ s_hat, Y_jbm_hat, z_hat ] = tradict_predict_pmvn( t_m, o, model );
-    save('jbm_tradiction.mat', 's_hat', 't_hat', 'z_hat');
+    save('jbm_tradiction.mat', 's_hat', 'Y_jbm_hat', 'z_hat');
 end
 
 % Load fully trained tradict model. Old version - DEPRECATED

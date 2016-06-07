@@ -303,8 +303,69 @@ if true
         save('NCBI_SRA_Athaliana_final_tradict_model.mat', 'model');
     end
 
-
+    
+    % Performance vs probe number
     if true
+        topN = true;
+        [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
+        
+        
+        t = (ytrain).*repmat(qt.spots(ktrain)/1000000,1, size(ytrain,2) );
+        o = qt.spots(ktrain)/1000000;
+        model = tradict_train_pmvn(t, o, tids, sets, 'topN', topN);
+        
+        
+        % Actual values
+        t_test = ytest.*repmat(qt.spots(~ktrain)/1000000,1, size(ytest,2));
+        o_test = qt.spots(~ktrain)/1000000;
+
+        z = lag_dataset(t_test, o_test, 'priors', model.lag_priors);
+        zs = standardize(z, 'mu', model.train_mu, 'std', model.train_sig);
+        s = zs*model.geneset.coef;
+        
+        pcc_genesets = zeros(1,length(model.S));
+        pcc_genes = zeros(1,length(model.S));
+        for i = 1 : length(model.S)
+            model2 = model;
+            
+            model2.fit.markers.z = model2.fit.markers.z(:,1:i);
+            model2.fit.markers.mu = model2.fit.markers.mu(1:i);
+            model2.fit.markers.Sigma = model2.fit.markers.Sigma(1:i,1:i);
+            
+            model2.fit.geneset.cross_cov = model2.fit.geneset.cross_cov(1:i,:);
+            model2.fit.genes.cross_cov = model2.fit.genes.cross_cov(1:i,:);
+            
+            t_m = ytest(:,model2.S(1:i) ).*repmat(qt.spots(~ktrain)/1000000,1, length(model2.S(1:i)) );
+            o = qt.spots(~ktrain)/1000000;
+            
+            
+            [ s_hat, ~, z_hat ] = tradict_predict_pmvn( t_m, o, model2 );
+            
+            ta = standardize(subadjust(s, qt.Submission(~ktrain)));
+            pa = standardize(subadjust(s_hat, qt.Submission(~ktrain)));
+            pcc_genesets(i) = corr(ta(:), pa(:));
+            
+            ta = standardize(subadjust(z, qt.Submission(~ktrain)));
+            pa = standardize(subadjust(z_hat, qt.Submission(~ktrain)));
+            pcc_genes(i) = corr(ta(:), pa(:));
+            
+            fprintf('%0.0f\t%0.4f\t%0.4f\n', i, pcc_genesets(i), pcc_genes(i));
+        end
+        
+        if topN
+            pcc_genes_topN = pcc_genes;
+            pcc_genesets_topN = pcc_genesets;
+            save('perf_vs_num_markers_topN.mat', 'pcc_genes_topN', 'pcc_genesets_topN');
+        else
+            save('perf_vs_num_markers.mat', 'pcc_genes', 'pcc_genesets');
+        end
+        
+        plot_perf_vs_num_markers;
+    end
+    
+    
+
+    if false
         if false
             t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
             o = qt.spots/1000000;
