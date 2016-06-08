@@ -49,7 +49,7 @@ xticklabel = datestr(xtick + mindn);
 
 set(gca, 'XTick', fliplr(xtick));
 set(gca, 'XTickLabel', flipud(cellstr(xticklabel)));
-rotateXLabels(gca, 36);
+try; rotateXLabels(gca, 36);end
 ytick =  floor(exp(xtick*b(2) + b(1)));
 
 NYTICKSKIP = 3; ytick = [ytick(1:end-NYTICKSKIP), 0];
