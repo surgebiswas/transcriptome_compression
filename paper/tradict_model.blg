@@ -3,44 +3,44 @@ Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: tradict_model.aux
 The style file: unsrt.bst
 Database file #1: refs.bib
-You've used 1 entry,
+You've used 2 entries,
             1791 wiz_defined-function locations,
-            452 strings with 3601 characters,
-and the built_in function-call counts, 266 in all, are:
-= -- 26
-> -- 4
+            460 strings with 3733 characters,
+and the built_in function-call counts, 488 in all, are:
+= -- 49
+> -- 8
 < -- 1
-+ -- 2
-- -- 1
-* -- 13
-:= -- 44
-add.period$ -- 3
-call.type$ -- 1
-change.case$ -- 1
++ -- 4
+- -- 2
+* -- 30
+:= -- 78
+add.period$ -- 6
+call.type$ -- 2
+change.case$ -- 2
 chr.to.int$ -- 0
-cite$ -- 1
-duplicate$ -- 14
-empty$ -- 25
-format.name$ -- 1
-if$ -- 60
+cite$ -- 2
+duplicate$ -- 23
+empty$ -- 49
+format.name$ -- 2
+if$ -- 108
 int.to.chr$ -- 0
-int.to.str$ -- 1
-missing$ -- 1
-newline$ -- 8
-num.names$ -- 1
-pop$ -- 3
+int.to.str$ -- 2
+missing$ -- 2
+newline$ -- 13
+num.names$ -- 2
+pop$ -- 4
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 9
+skip$ -- 12
 stack$ -- 0
-substring$ -- 19
-swap$ -- 6
+substring$ -- 44
+swap$ -- 7
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 4
-width$ -- 2
-write$ -- 13
+while$ -- 7
+width$ -- 3
+write$ -- 24

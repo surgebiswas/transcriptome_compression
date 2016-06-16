@@ -1,5 +1,7 @@
 clear;
 rng('default');
+path(genpath('~/GitHub/transcriptome_compression'), path)
+path(genpath('~/GitHub/latent_log'), path)
 
 % Initialize environment
 completiontext = false;
@@ -117,7 +119,7 @@ end
 load('JBM_data_processed.mat');
 
 % Load fully trained tradict model.
-if true
+if false
     load('~/GitHub/data/transcriptome_compression/Athaliana/NCBI_SRA_Athaliana_final_tradict_model.mat');
     
     t_m = Y_jbm(:, model.S).*repmat(xd.depth/1000000,1, length(model.S));
@@ -240,7 +242,7 @@ if true
     % JA response characterization
     jaidx = find(strcmpi(setnames(:,1), 'response to jasmonic acid'));
     jbm_marker_plot(s(:,jaidx), s_hat(:,jaidx), xd, 'MeJA', {'coi1-16', 'npr1-1', 'Col-0', '35S:HopBB1', 'eds16-1'}, ... 
-        ['JA response pathway score'], 'rep_to_use', 1);
+        ['JA response program expression'], 'rep_to_use', 1);
     plotSave('JA_pathway_scores_pred_v_actual.png'); close;
     
     tpmcmap = cbrewer('seq', 'YlOrRd', 64);
@@ -260,7 +262,7 @@ if true
     % SA response characterization
     saidx = find(strcmpi(setnames(:,1), 'response to salicylic acid'));
     jbm_marker_plot(s(:,saidx), s_hat(:,saidx), xd, 'BTH', {'coi1-16', 'npr1-1', 'Col-0', '35S:HopBB1', 'eds16-1'}, ... 
-        ['SA response pathway score'], 'rep_to_use', 1);
+        ['SA response program expression'], 'rep_to_use', 1);
     plotSave('SA_pathway_scores_pred_v_actual.png'); close;
     
     bthd = dataset('file', 'BTH_up_Col-0.txt', 'ReadVarNames', false, 'ReadObsNames', false);

@@ -67,28 +67,25 @@ This document describes the full mathematical details for the concepts presented
 
 For a matrix $A$, $A_{:i}$ and $A_{i:}$ index the $i^{th}$ column and row, respectively. For a set of indices, $q$, we use $-q$ to refer to all indices not specified by $q$. 
 
-We define the continuous relaxation of the Poisson distribution (hereafter, Continuous-Poisson) to have the following density function:
+\section{Model} \label{model}
+
+Tradict uses a Continuous-Poisson Multivariate Normal (CP-MVN) hierarchical model to model the expression of transcriptional programs and all genes in the transcriptome. Multivariate Normal hierarchies have been explored in the past as a means of modeling correlation structure among count based random variables [REF]. However, given we will be working with abundances as transcripts per million (TPM), which are non-negative (can equal zero) and fractional, we  relax the integral assumption of the Poisson so it is continuous on $[0, \infty)$.   Specifically, we define the continuous relaxation of the Poisson distribution (hereafter, Continuous-Poisson) to have the following density function:
 \[
 f(x|\lambda) = C_\lambda \frac{e^{-\lambda} \lambda^x}{\Gamma(x + 1)}
 \]
-where $C_\lambda$ is a normalization constant.
+where $C_\lambda$ is a normalization constant [REF]. The mean of this distribution is given by $\lambda$, just as the Poisson.
 
-
-
-
-\section{Model} \label{model}
-
-Tradict uses a Continuous-Poisson Multivariate Normal (CP-MVN) hierarchical model to model the expression of transcriptional programs and all genes in the transcriptome. We begin by building a predictive model of gene expression, and thereafter discuss a predictive model for the expression of transcriptional programs. 
-
-Let $z_j$ denote the log-\emph{latent abundance} of gene $j$, such that $\exp(z_j)$ is the \emph{latent abundance} of that gene's TPM measurement, $t_j$. Let $T_j = t_jo$ be the measured number of transcripts of gene $j$. Here o is the sequencing depth in millions of reads of the sample under consideration. We assume then, 
+We begin by building a predictive model of gene expression, and thereafter discuss a predictive model for the expression of transcriptional programs. Let $z_j$ denote the log-\emph{latent abundance} of gene $j$, such that $\exp(z_j)$ is the \emph{latent abundance} of that gene (in TPM) whose measured abundance is given by $t_j$. Let $T_j = t_jo$ be the measured total number of transcripts of gene $j$. Here o is the sequencing depth in millions of reads of the sample under consideration. We assume then, 
 \begin{align*}
 z & \sim \mathcal{N}\left(\mu, \Sigma\right) \\
 T_j & \sim \textrm{Continuous-Poisson}(\exp(z_j)o)
 \end{align*}
-where $\mu$ and $\Sigma$ are 1 $\times$ $\#$-genes and $\#$-genes $\times$ $\#$-genes, respectively. In effect, we are assuming that the number of measured transcripts for gene $j$ is some noisy realization of an unmeasured latent abundance $\exp(z_j)$ times the sequencing depth, $o$. The log-latent abundances are then coupled across genes via the Multivariate Normal layer of the model. Note that we could model the TPM measurements directly in the second layer by assuming $t_j \sim \textrm{Continuous-Poisson}(\exp(z_j))$; however, this formulation does not consider sequencing depth, which can be a valuable source of information when inferring latent abundances for rare/poorly sampled genes \cite{Biswas2016a}. 
+where $\mu$ and $\Sigma$ are of dimension 1 $\times$ $\#$-genes and $\#$-genes $\times$ $\#$-genes, respectively. In effect, we are assuming that the measured number of transcripts for gene $j$ is a noisy realization of a latent abundance $\exp(z_j)$ times the sequencing depth, $o$. The dependencies between log-latent abundances (the $z_j$'s) are then encoded by the covariance matrix of the Multivariate Normal layer of the model. 
 
-During decoding, we are interested in building a predictive model between markers and all genes in the transcriptome, and are therefore not interested in working with the full model described above. Instead, we need to consider a conditional model of the transcriptome given the log-latent abundances of the markers. Let $m$ be the set of indices for the given panel of selected markers. We have, 
 
+Note that we could model the TPM measurements directly in the second layer by assuming $t_j \sim \textrm{Continuous-Poisson}(\exp(z_j))$; however, this formulation does not consider sequencing depth, which can be a valuable source of information when inferring latent abundances for rare/poorly sampled genes \cite{Biswas2016a}. 
+
+During decoding, we are interested in building a predictive model between markers and all genes in the transcriptome. Therefore, we need to consider a conditional model of the transcriptome given the log-latent abundances of the markers. Let $m$ be the set of indices for the given panel of selected markers, which are the subset of genes Tradict selects as representative of the transcriptome. To perform prediction we therefore need $p(z_{-m} | z_m)$, and given this we would like to ultimately compute as our estimate of the abundance of all genes in the transcriptome $\hat{T} = \argmax_T p(T | z_m)$.  We have, 
 \begin{align*}
 z_m & \sim \mathcal{N}(\mu^{(m)}, \Sigma^{(m)}) \\
 z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
@@ -112,13 +109,13 @@ Let $\Lambda \in \mathbb{R}^{\textrm{genes} \times \textrm{transcriptional progr
 
 Given $\hat{z}_m$ the cross-covariances, $\sigma_{z_m,s}$ and $\sigma_{z_m,z_{-m}}$, are given by the usual sample cross-covariance between $\hat{z}_m$ and $\hat{s}$ and between $\hat{z}_m$ and $\hat{z}_{-m}$, respectively. 
 
-Now, though we could use the lag-transformed values of $t_m$ as our estimate for $z_m$, we have an opportunity to improve this estimate by virtue of having to estimate $\mu^{(m)}$ and  $\Sigma^{(m)}$. More specifically, given $z_m$, estimates of $\mu^{(m)}$ and  $\Sigma^{(m)}$ are given by -- up to some regularization -- the usual sample mean and covariance of $z_m$. Furthermore, given $\mu^{(m)}$ and  $\Sigma^{(m)}$, we can update our estimate of $z_m$. This suggests an alternating iterative procedure in which we iterate 1) estimation of $\mu^{(m)}$ and  $\Sigma^{(m)}$, and 2) inference of $z_m$ until convergence of their joint likelihood. It is the $\hat{z}_m$ that we obtain from this procedure that we use in the cross-covariance calculations above.
+Now, though we could use the lag-transformed values of $t_m$ as our estimate for $z_m$, we have an opportunity to improve this estimate by virtue of having to estimate $\mu^{(m)}$ and  $\Sigma^{(m)}$. More specifically, given $z_m$, estimates of $\mu^{(m)}$ and  $\Sigma^{(m)}$ are given by -- up to some regularization -- the usual sample mean and covariance of $z_m$. Furthermore, given $\mu^{(m)}$ and  $\Sigma^{(m)}$, we can update our estimate of $z_m$ to the maximum of its posterior distribution. This suggests an alternating iterative procedure in which we iterate 1) estimation of $\mu^{(m)}$ and  $\Sigma^{(m)}$, and 2) maximum \emph{a posteriori} inference of $z_m$ until convergence of their joint likelihood. It is the $\hat{z}_m$ that we obtain from this procedure that we use in the cross-covariance calculations above. The following section details this procedure.
 
 
 
 \subsection{Inference of $z_m$ given $\mu^{(m)}$ and $\Sigma^{(m)}$}
 
-Suppose Tradict has estimates of $\mu^{(m)}$ and $\Sigma^{(m)}$ given by $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$, and let $T_m = t_m(o \times \textbf{1}_{1 \times \textrm{markers}} )$ be a matrix of the total measured number of transcripts for each marker. Here $o \in \mathbb{R}^{\textrm{samples} \times 1}$ is a vector of sample sequencing depths in millions of reads. Given these, we can calculate a maximum \emph{a posteriori} (MAP) estimate of $z_m$. 
+Suppose Tradict has estimates of $\mu^{(m)}$ and $\Sigma^{(m)}$ given by $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$, and let $T_m = t_m(o \times \textbf{1}_{1 \times \textrm{markers}} )$ be a matrix of the total measured number of transcripts for each marker. Here $o \in \mathbb{R}^{\textrm{samples} \times 1}$ is a vector of sample sequencing depths in millions of reads. Given these, we would like to calculate the maximum \emph{a posteriori} (MAP) estimate of $\hat{z}_m = \argmax_{z_m} p(z_m | o, T_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) $. 
 
 The posterior distribution over $z_m$ is given by 
 \begin{align*}
@@ -132,28 +129,29 @@ where for notational clarity we have used $\textrm{inv}(\cdot)$ to represent mat
 Given $z$ is a matrix parameter, this may be difficult to solve directly. However, note that given $z_{ij}$, $T_{ij}$ is conditionally independent of $T_{i,-j}$. Additionally, given $z_{i,-j}$, $z_{ij}$ is normally distributed with mean and covariance 
 \begin{align*}
 a_{ij} & = \mu^{(m)}_j + \left(z_{i,-j} - \mu^{(m)}_{-j} \right)\textrm{inv}\left( \Sigma^{(m)}_{-j,-j} \right) \Sigma^{(m)}_{-j,j} \\
-\sigma_j &= \Sigma^{(m)}_{j,j} - \Sigma^{(m)}_{j,-j}\textrm{inv}\left( \Sigma^{(m)}_{-j,-j} \right) \Sigma^{(m)}_{-j,j}
+\sigma_{m(j)} &= \Sigma^{(m)}_{j,j} - \Sigma^{(m)}_{j,-j}\textrm{inv}\left( \Sigma^{(m)}_{-j,-j} \right) \Sigma^{(m)}_{-j,j}
 \end{align*}
-respectively. Taken together, this suggests an iterative conditional modes algorithm in which we maximize the posterior one column of $z$ at a time, while conditioning on all others. 
+respectively. Taken together, this suggests an iterative conditional modes algorithm \cite{Besag1986} in which we maximize the posterior one column of $z$ at a time, while conditioning on all others. 
 
-Let $\hat{z}$ denote our current estimate of $z$. Our objective is given by,
+Let $\hat{z}_m$ denote our current estimate of $z_m$. Let $m(j)$ denote the index of the $j^{th}$ marker and let $m(-j)$ denote the indices of all markers but the $j^{th}$ one. The above sub-objective is given by,
 \begin{align*}
-\hat{z}_{ij} & = \argmax_{z_{ij} | z_{i,-j}} \log p(z_{ij} | T_{ij}, o_i, \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \\
-& = \argmax_{z_{ij} | z_{i,-j} } \log p(T_{ij} | z_{ij},  o_i, \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})p(z_{ij} | \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
-& = \argmax_{z_{ij} | z_{i,-j} } \log p(T_{ij} | z_{ij}, o_i)p(z_{ij} | \hat{z}_{i,-j}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
-& = \argmax_{z_{ij} | z_{i,-j} } \log \left[ [\exp(z_{ij})o_i]^{T_{ij}}  e^{-[\exp(z_{ij})o_i]} \exp \left( -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 \right) \right] \\
-& = \argmax_{z_{ij} | z_{i,-j} }  T_{ij}\exp(z_{ij})o_i -\exp(z_{ij})o_i  -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 
+\hat{z}_{im(j)} & = \argmax_{z_{im(j)} | z_{im(-j)}} \log p(z_{im(j)} | T_{im(j)}, o_i, \hat{z}_{im(-j)}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \\
+& = \argmax_{z_{im(j)} | z_{im(-j)} } \log p(T_{im(j)} | z_{im(j)},  o_i, \hat{z}_{im(-j)}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})p(z_{im(j)} | \hat{z}_{im(-j)}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
+& = \argmax_{z_{im(j)} | z_{im(-j)} } \log p(T_{im(j)} | z_{im(j)}, o_i)p(z_{im(j)} | \hat{z}_{im(-j)}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})  \\
+& = \argmax_{z_{im(j)} | z_{im(-j)} } \log \left[ [\exp(z_{im(j)})o_i]^{T_{im(j)}}  e^{-[\exp(z_{im(j)})o_i]} \exp \left( -\frac{1}{2\sigma_{m(j)}}(z_{im(j)} - a_{im(j)})^2 \right) \right] \\
+& = \argmax_{z_{im(j)} | z_{im(-j)} }  T_{im(j)}\exp(z_{im(j)})o_i -\exp(z_{im(j)})o_i  -\frac{1}{2\sigma_{m(j)}}(z_{im(j)} - a_{im(j)})^2 
 \end{align*}
+
 
 Differentiating we get,
 \begin{align*}
-\frac{\partial}{\partial z_{ij}}  T_{ij}z_{ij}o_i - \exp(z_{ij})o_i  -\frac{1}{2\sigma_j}(z_{ij} - a_{ij})^2 \\ 
-= T_{ij}o_i - \exp(z_{ij})o_i  -\frac{1}{\sigma_j}(z_{ij} - a_{ij}) \\ 
+\frac{\partial}{\partial z_{im(j)}}  T_{im(j)}z_{im(j)}o_i - \exp(z_{im(j)})o_i  -\frac{1}{2\sigma_{m(j)}}(z_{im(j)} - a_{im(j)})^2 \\ 
+= T_{im(j)}o_i - \exp(z_{im(j)})o_i  -\frac{1}{\sigma_{m(j)}}(z_{im(j)} - a_{im(j)}) \\ 
 \end{align*}
-Because $z_{ij}$ appears as a linear and exponential term, we cannot solve this gradient analytically. We therefore utilizes Newton-Raphson optimization. For this we also require the Hessian, which is given by,  
+Because $z_{im(j)}$ appears as a linear and exponential term, we cannot solve this gradient analytically. We therefore utilize Newton-Raphson optimization. For this we also require the Hessian, which is given by,  
 \begin{align*}
-\frac{\partial}{\partial z_{ij}} T_{ij}o_i - \exp(z_{ij})o_i  -\frac{1}{\sigma_j}(z_{ij} - a_{ij}) \\ 
-=  -\exp(z_{ij})o_i  - \frac{1}{\sigma_j} < 0
+\frac{\partial}{\partial z_{im(j)}} T_{im(j)}o_i - \exp(z_{im(j)})o_i  -\frac{1}{\sigma_{m(j)}}(z_{im(j)} - a_{im(j)}) \\ 
+=  -\exp(z_{im(j)})o_i  - \frac{1}{\sigma_{m(j)}} < 0
 \end{align*}
 Notice the Hessian is always negative-definite, which implies each update has a single, unique optimum. 
 
@@ -162,7 +160,7 @@ In practice, the Newton-Raphson updates can be performed in vectorized fashion i
 
 \subsection{Complete inference of $\mu^{(m)}$, $\Sigma^{(m)}$, and $z_m$}
 
-For complete inference we use the following algorithm
+For complete inference we use the following iterative conditional modes algorithm \cite{Besag1986}:
 \begin{itemize}
 \item Initialize $T_m = t_m(o \times \textbf{1}_{1 \times \textrm{markers}} )$, $\hat{z}_m = \textrm{lag}(t_m)$.
 \item Until convergence of $\log p(T_m | o, \hat{z}_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) + \log p(\hat{z}_m| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)})$, iterate:
@@ -177,7 +175,7 @@ For complete inference we use the following algorithm
 \end{itemize}
 Here $\textrm{diag}(x)$ of the square matrix $x$ returns an equivalently sized matrix with only the diagonal of $x$ preserved and 0's for the off-diagonal terms. $\textrm{cov}(\cdot)$ denotes the usual sample covariance matrix.
 
-Note that in this algorithm we have added a regularization to the estimate of the covariance matrix. This is done in order to ensure stability and to avoid infinite-data-likelihood singularities that arise from singular covariance matrices. This is most often happens when a geneâ€™s TPM abundance is mostly zero (i.e. there is little data for the gene), giving the multivariate normal layer an opportunity to tightly couple this geneâ€™s latent abundance to that of another gene, thereby producing a singularity. This regularization is probabilistically equivalent to adding and Inverse-Wishart prior over $\Sigma^{(m)}$. The parameter $\lambda$ controls the strength of the regularization. In practice, we find $\lambda = 0.1$ leads to good predictive performance, stable (non-singular) covariance matrices, and reasonably quick convergence.
+Note that in this algorithm we have added a regularization to the estimate of the covariance matrix. This is done in order to ensure stability and to avoid infinite-data-likelihood singularities that arise from singular covariance matrices. This is most often happens when a gene€™s TPM abundance is mostly zero (i.e. there is little data for the gene), giving the multivariate normal layer an opportunity to increase the data likelihood (via the determinant of the covariance matrix) by tightly coupling this genes€™ latent abundance to that of another gene, thereby producing a singularity. This regularization is probabilistically equivalent to adding an Inverse-Wishart prior over $\Sigma^{(m)}$. The parameter $\lambda$ controls the strength of the regularization. In practice, we find $\lambda = 0.1$ leads to good predictive performance, stable (non-singular) covariance matrices, and reasonably quick convergence.
 
 
 
@@ -193,21 +191,33 @@ During decoding we are given new measured TPM measurements for our markers, $t^*
 
  %Because the sequencing depths for these measurements won't be directly comparable to those required for full transcriptome sequencing, we do not consider these. Given a fraction of the reads required for full transcriptome sequencing will be needed to only measure marker gene expression, we assume that the measurements are thorough. In this case the effect of sequencing depth on the inference of log-latent abundances will be small, if we directly model $\mathbb{E}[t^*_j | z_j] = \exp((z_j)\times 1)$ 
 
-Given the learned latent marker abundances, we can calcualte the expected espression of all transcriptional programs as
+Given the inferred marker latent abundances, we let our estimates of $s^*$ and $t_m^*$ be the maximizers of their probability distribution. In other words, $\hat{s}^* = \argmax_{s^*} p(s^* | \hat{z}_m^*)$ and $\hat{t}_m^* = \argmax_{t_m^*} p(t_m^* | \hat{z}_m^*)$. 
+
+Our estimate for the expression of all transcriptional programs is given by
 \[
-\mathbb{E}[s^* |\hat{z}_m^* ] = \mu_{s^* |\hat{z}_m^* } = \hat{\mu}_s + \left(\hat{z}_m^*  - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s}.
+\argmax_{s^*} p(s^* | \hat{z}_m^*) = \mathbb{E}[s^* |\hat{z}_m^* ] = \mu_{s^* |\hat{z}_m^* } = \hat{\mu}_s + \left(\hat{z}_m^*  - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s}.
 \]
 Here, $\hat{\mu}_s $ and $\hat{\sigma}_{z_{m},s}$ represent estimates of the unconditional mean of $s$ and the cross-covariance matrix between $z_m$ and $s$ previously learned during encoding.
 
-For the remaining, non-marker genes in the transcriptome we have,
+Similarly, for the entire transcriptome we have, 
+\[
+\hat{t}^*_{ij} = \argmax_{t} p(t |  \hat{z}^*_{im})  = \exp\left( \mu_{z_{ij} | \hat{z}^*_{im}}  \right).
+\]
+where, 
+\[
+\mu_{z_{ij} | \hat{z}^*_{im}} =  \hat{\mu}_j + \left( \hat{z}^*_{im}- \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},z_j} 
+\]
+
+
+We could also use the expected value of $t$ as our estimate. 
 \begin{align*}
-\hat{t}_{ij}^* = \mathbb{E}[t^*_{ij}  | \hat{z}^*_{im}] & =  \int_{-\infty}^\infty \mathbb{E}[t^*_{ij} | z^*_{ij}] p(z_{ij} | \hat{z}^*_{im})  \textrm{d}z_{ij} \\
+\mathbb{E}[t^*_{ij}  | \hat{z}^*_{im}] & =  \int_{-\infty}^\infty \mathbb{E}[t^*_{ij} | z^*_{ij}] p(z_{ij} | \hat{z}^*_{im})  \textrm{d}z_{ij} \\
 & = \int_{-\infty}^\infty \exp(z_{ij}) \mathcal{N}(z_{ij} | \mu_{z_{ij} | \hat{z}_{im}^* }, \Sigma_{z_{ij} | \hat{z}_{im}^* }) \textrm{d}z_{ij} \\
 & = \mathbb{E}_{\mathcal{N}}[\exp(z_{ij}) | \hat{z}^*_{im}]
 \end{align*}
 The Moment Generating Function of a Normal random variable $X$ with mean $\mu$ and variance $\sigma^2$ is given by $M(t) = \mathbb{E}[\exp(tX)] = \exp(\mu t + \sigma^2t^2/2)$. Therefore we have, 
 \[
-\hat{t}_{ij}^* = \mathbb{E}[t^*_{ij}  | \hat{z}^*_{im}] = \mathbb{E}_{\mathcal{N}}[\exp(z_{ij}) | \hat{z}^*_{im}] = M(1) = \exp \left( \mu_{z_{ij} | \hat{z}_{im}^* } + \frac{1}{2}\Sigma_{z_{ij} | \hat{z}_{im}^* } \right)
+\mathbb{E}[t^*_{ij}  | \hat{z}^*_{im}] = \mathbb{E}_{\mathcal{N}}[\exp(z_{ij}) | \hat{z}^*_{im}] = M(1) = \exp \left( \mu_{z_{ij} | \hat{z}_{im}^* } + \frac{1}{2}\Sigma_{z_{ij} | \hat{z}_{im}^* } \right)
 \]
 where, 
 \begin{align*}
@@ -216,12 +226,7 @@ where,
 \end{align*}
 Here, $\hat{\mu}_j $ and $\hat{\sigma}_{z_{m},z_j}$ represent estimates of the unconditional mean of $z_j$ and the cross-covariance matrix between $z_m$ and $z_j$. These were learned from the training data during encoding.
 
-Though this predictor is unbiased, it does not produce a good prediction for most samples. This is due to the right-skew of the Poisson, which drags its mean away from the most likely values. Therefore, in practice, we use as our estimate of $t^*_{ij}$,
-\[
-\hat{t}^*_{ij} = \argmax_{t} p(t |  \hat{z}^*_{im})  = \exp\left( \mu_{z_{ij} | \hat{z}^*_{im}}  \right).
-\]
-
-
+Though this predictor is unbiased, it does not produce a good prediction for most samples. This is due to the right-skew of the Poisson, which drags its mean away from the most likely values. 
 \section{References}
 \bibliography{refs}
 

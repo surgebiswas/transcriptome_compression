@@ -1,18 +1,24 @@
 Timeline/Tasks
 
 To do: 
-- Discussion
-- Conclusion
 - Trim text
-- Expression optimization
 - Actual expression calculations 
+- Differential transcriptional program expression analysis.
+- Get code in order
+- Write abstract
+- Write Cover letter
+
+
+… for future:
+- Expression optimization
+- Filter programs by # genes.
+- Push tr program expression through continuous poisson
 
 
 
 Misc:
-- Expression optimization. 
-- Get code in order
-- Discussion points	- Number of reads required, increase in throughput and cost.
+
+
 
 Our approach:	- Models RNA-Seq Data(*)	- Markers are expression optimized without sacrificing statistical power. (*)	- Robust (*)	- Looks at the expression of all pathways (*)	- Trained on the largest transcriptomic dataset known to date (*)	- Accurate (*)
 
@@ -20,4 +26,144 @@ Our approach:	- Models RNA-Seq Data(*)	- Markers are expression optimized with
 Future directions:
 - Application of Tradict to a large single-cell dataset.
 
+KK:
+Happy with manuscript.
+
+VJ:
+[pending]
+
+JLD:
+- Major comments: 1) Better, more upfront definition of transcriptional programs
+- Minor comments: Grammar/spelling/wording
+- Actions taken: 
+	- “Transcriptional programs” defined generally at first use in intro. 
+	- “Transcriptional programs” rigorously defined in Supp Info. Methods.
+	- Clarified more specific definition in Tradict - algorithm overview section
+	- Fixed suggested grammar/spelling/wording edits
+
+PJPLT:
+- Major Comments: 1) How to convince people to use Tradict given it alone can’t targetedly sample the transcriptome. 2) Vague Title. 3) Add acknowledgement of Pew, 4) Is saturated sampling of the transcriptome REQUIRED for method to work? 5) Biological significance of being able to predict transcriptome w/ 100 markers?
+- Minor comments: grammar/spelling/wording 
+
+- Actions Taken:
+	- Targeting sequencing technologies + use with Tradict extensively discussed in Discussion 
+	- Title changed
+	- Added requested acknowledgement text
+	- Re: Major 4) I do have preliminary analysis showing how Tradict behaves as a function of increasing # of samples. I need to repeat and do this more thoroughly. I think this can wait until after reviews and be added as a Supplemental Note. Good idea.
+	- Re: Major 5) Some theories for why this is possible given in the intro. Avoiding discussing the biological “significance” of these markers since they were picked purely based on statistical relationships.
+	- fixed grammar/spelling/wording as suggested.
+
+PAW:
+- Major comments: 1) Title change. 
+- Minor comments: Grammar/spelling/wording. Several suggested cuts
+- Actions Taken: Changed title. Accepted many grammar/spelling/wording changes. Because I’ve moved a lot of text to the supplemental, I’ve kept some of the text you’ve suggested to cut. Can always cut these later and I don’t think they are complicating the message. 
+
+
+
+
+Vladimir’s comments:
+Ok, the main difficulty I am having right now is the following:
+Why lag transform the data and then train your model on these transformed data? Couldn't you just train a model directly on the data without transforming it?
+
+Comments about the math doc below:
+
+cite continuous poisson
+---
+state what is introduced in the paper, rest cite.
+For example, CP-MVN is new?
+
+>> Cited. 
+---
+what does "expression of transcriptional programs." mean?
+
+>> See methods section in Supp info as mentioned at the beginning of the doc. 
+---
+log-latent abundance or latent log-abundance? It seems strange to take log of latent abundance, it seems ok to take log of abundance and then say that this quantity is unobserved.
+
+>> No we want log-latent abundance. Abundance given as t (units = transcripts per million (TPM)), so log abundance can be undefined if abundance is zero. However latent abundance is given by E[t] = exp(z) where z ~ Normal. So log latent abundance is simply z, the normal variable.
+---
+"latent abundance of that gene’s TPM measurement" sounds strange "latent abundance of gene" or say "TPM measuremnet of gene's latent abundance"
+
+>> fixed
+---
+µ and S are 1 × #-genes and #-genes × #-genes -> µ and S are of dimensions 1 × #genes and #genes × #genes,
+
+>> fixed
+---
+number of measured transcripts -> measured number of transcripts
+
+>> fixed
+---
+some noisy realization -> a noisy realization ... not sure here but realization is countable ...
+
+>> fixed
+---
+unmeasured latent abundance -> either unmeasured or latent; saying both is redundant
+
+>> fixed
+---
+"The log-latent abundances are then coupled across genes" not sure what you mean by coupling. You might want to say that the dependencies between logarthm of the true (unobserved) abundances are encoded by the covariance matrix.
+
+>> fixed
+---
+units of sequencing depth are not clear. In fact exp(zj)*o is not quite clear what are units of these quantities. Is exp(zj) the true number of transcripts and o is the fraction of those that get copied into reads? So is o<1 ...
+
+>> No see line 29. t_j is measured abundance in transcripts per million. exp(z_j) = true unobserved abundance all in transcripts per million. units of o = sequencing depth in millions of reads. So T_j = t_jo has units # transcripts. 
+
+---
+rather than saying "not interested in the full model" say that from the full model you can obtain conditional distribution ...
+
+>> fixed
+---
+what is a marker? how do you differentiate between marker and a gene ... it can be guessed later when you talk about non-marker genes. Also, define m (set of markers).
+
+>> Defn of marker given in main text. Also given again here now. 
+---
+I'd state the goal of the prediction upfront, so your goal is to compute p(z_{-m}|z_{m})
+
+>> fixed
+---
+A marker gene does not have a "transcriptional program" ... since you use phrases such as "all transcriptional programs" 
+
+You seem to be switching between "non-marker genes" and "transcriptional program". Are these the same or different?
+
+>> transcriptional programs are different than markers as described in the Methods section of the Supplemental. There are two objects to predict here 1) genes, 2) transcriptional programs, which are composed of genes (specifically a linear combination of a group of them, where waits are PC1 coefficients).
+
+---
+"lag transforming" is what? First define/cite it, say what its purpose is, and then say stuff like "in lag transforming ..."
+
+>> Defined in Supp Info Mat and Methods. 
+---
+"principal component" pops out of nowhere, which matrix are you computing this and if this is PC1 how come it is a matrix ?
+
+>> Defined in Supp Info Mat and Methods. It is a matrix because there multiple transcriptional programs, which are defined over genes. 
+---
+Lines 61-67 seem to be refering to some sort of EM-ish kind of algorithm, but it is not clear to me what is done here and how you arrived at the algorithm. I would not be able to reproduce the algorithm specified on those lines in a straightforward manner. Give algorithm or math ... Either way explain better
+
+>> fixed. see next comment.
+---
+Reading the next section, it seems that 61-67 is some sort of summary of the algorithm to come. Sentence along the lines this procedure is outlined in the following section might help. Regardless I'd state that lag(t_m) is a subpar estimate of the true abundance due to the measurement noise. Denoising can be accomplished by leveraging information from marker genes ... Then say that the denoising computes maximizer of posterior: argmax p(z|...). Then say that this maximization is performed a pair of steps each of which is guaranteed to improve the probability of the estimated z_m given the data ... 
+
+>> fixed
+---
+"matrix parameter, this may be difficult to solve directly." what is this in that sentence? You are missing argmax somewhere to specify the optimization problem ... Probably want to define z^MAP etc ...
+
+>> objective defined, see line 87.
+---
+"Our objective is given by ..." I'd pull the objective of estimating z_ij to the top and then delve into the math.
+
+>> Fixed
+---
+90-94 looks like a generalized EM (ICM) call it out, especially E and M steps. It will help people.  Cite.
+
+>> Fixed.
+---
+Given the learned latent marker abundances -> Given the infered marker abundances 
+since you are using t*_m and you are infering z^*_m 
+
+>> fixed
+---
+Why write 104-109 just to abandon it? It would work to just say and we use argmax p(t|z^*_m) as prediction of the gene's levels
+
+>> fixed
 

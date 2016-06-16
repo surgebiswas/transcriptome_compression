@@ -216,6 +216,8 @@ if true
         l(i) = plot(s_hatas(m,lpsi), sas(m,lpsi), 'o', 'MarkerFaceColor', cm(i,:), 'Color', cm(i,:));
         disp(corr(sas(m,lpsi), s_hatas(m,lpsi), 'type', 'spearman'));
     end
+    mall = steq(xd.treatment, ut);
+    disp(corr(sas(mall,lpsi), s_hatas(mall,lpsi)));
     
     sf = get_standard_figure_font_sizes;
     axis square;
