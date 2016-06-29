@@ -8,3 +8,6 @@ With the exception of data, this repository contains everything required to perf
 1. **data_download** - Contains the custom scripts necessary to download and quantify raw RNA-Seq reads from NCBI's Short Read Archive (SRA). This repository contains it's own README that describes how to perform the data downloads. An overview of the download workflow is also given in the Materials and Methods section in the Supplemental Information of our paper. 
 2. **util** - Contains accessory code used by analysis scripts. Code in this directory is commented as needed to explain function and usage. 
 3. **analysis** -- Contains all code used to perform analysis and generate figures. The main analysis 'master scripts' are in the `Athaliana` and `Mmusculus` subfolders and have file names of the following form: `analyze_X_transcriptome_compression.m`.  These master scripts contain blocks of code, demarcated by `if-else` blocks, that each perform an analysis of the data or produce sub-panels of a figure. These scripts are commented to provide descriptions of what they are doing, as are all dependency scripts. 
+
+
+Send questions/comments to surojitbiswas@g.harvard.edu.
