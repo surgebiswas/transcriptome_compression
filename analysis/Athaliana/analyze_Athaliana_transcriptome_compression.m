@@ -364,8 +364,13 @@ if true
     end
     
     
-
+    % Performance vs sample number.
     if true
+        performance_vs_num_samples(Y, qt, tids, sets);
+    end
+    
+
+    if false
         if false
             t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
             o = qt.spots/1000000;
