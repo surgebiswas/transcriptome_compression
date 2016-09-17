@@ -305,7 +305,7 @@ if true
 
     
     % Performance vs probe number
-    if true
+    if false
         topN = true;
         [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
         
@@ -365,7 +365,7 @@ if true
     
     
 
-    if false
+    if true
         if false
             t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
             o = qt.spots/1000000;
