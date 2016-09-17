@@ -185,8 +185,14 @@ end
 % Gene set analysis.
 if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
-
+    
+    % Performance vs sample number.
     if true
+        performance_vs_num_samples(Y, qt, tids, sets);
+    end
+        
+    
+    if false
         if false
             t = (Y').*repmat(qt.spots/1000000,1, size(Y,1) );
             o = qt.spots/1000000;

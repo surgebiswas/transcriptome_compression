@@ -13,6 +13,8 @@ qt_test = qt(~ktrain,:);
 rn = qt_train.release_date_num;
 if strcmpi(organism, 'Athaliana'); 
     rn_begin = 734740; %51 samples at this point
+else
+    rn_begin = 734325;
 end
 rn_sched = round(logspace(log10(rn_begin), log10(max(rn)), 20)');
 
