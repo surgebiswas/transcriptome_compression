@@ -40,7 +40,7 @@ for i = 1 : length(pswap)
     res.s_hat = pred.programs.s_hat;
     res.geneset_pexp = model.geneset.pexp;
     
-    results{i} = results;
+    results{i} = res;
 end
 
 save('perf_vs_program_purity.mat', 'results', 'pswap');

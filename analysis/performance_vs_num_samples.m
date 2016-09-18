@@ -58,7 +58,7 @@ for i = 1 : length(rn_sched)
     res.s_hat = pred.programs.s_hat;
     
     
-    results{i} = results;
+    results{i} = res;
 end
 
 save('perf_vs_num_samples_results.mat', 'results', 'nsamples', 'nsubs', 'rn_sched');
