@@ -61,7 +61,7 @@
 \tableofcontents
 \vspace{10mm}
 
-This document describes the full mathematical details for the concepts presented in the ``Tradict algorithm'' section, ``Building a predictive Multivariate Normal Continuous-Poisson hierarchical model''  subsection of the Materials and Methods in the Supplemental Information. Specifically, we present exactly how Tradict uses a selected set of markers to 1) complete the encoding, and 2) to perform decoding. 
+This document describes the full mathematical details for the concepts presented in the ``Tradict algorithm'' section, ``Building a predictive Multivariate Normal Continuous-Poisson hierarchical model''  subsection of the Materials and Methods in the Supplemental Information. Specifically, we present exactly how Tradict uses a selected set of markers to 1) complete training, and 2) to perform prediction. 
 
 \section{Preliminaries} \label{prelim}
 
@@ -101,7 +101,7 @@ s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m})
 \end{align*}
 To use these models for prediction, we must learn their parameters from training data. This would complete the process of encoding described in the Supplemental Information. Specifically, we need to learn $\mu^{(m)}$, $\Sigma^{(m)}$, $\mu_s$, $\mu_{z_{-m}}$, $\sigma_{z_m,s}$ and $\sigma_{z_m,z_{-m}}$.
 
-\section{Encoding} \label{inference}
+\section{Training} \label{inference}
 
 As described in the Supplemental Information, given an estimate of $z_m$, $\hat{z}_{m}$, inference of $\mu_s$, $\mu_{z_{-m}}$, $\sigma_{z_m,s}$ and $\sigma_{z_m,z_{-m}}$ is straightforward. In lag transforming the entire training TPM expression matrix, $t \in \mathbb{R}^{\textrm{samples} \times \textrm{genes}}$,  we have an estimate of $z$, $\hat{z} = \textrm{lag}(t)$ \cite{Biswas2016a}. Thus, an estimate of $\mu_{z_{-m}}$ is given by the usual column-wise sample mean of $\hat{z}_{-m}$. 
 
@@ -175,15 +175,18 @@ For complete inference we use the following iterative conditional modes algorith
 \end{itemize}
 Here $\textrm{diag}(x)$ of the square matrix $x$ returns an equivalently sized matrix with only the diagonal of $x$ preserved and 0's for the off-diagonal terms. $\textrm{cov}(\cdot)$ denotes the usual sample covariance matrix.
 
-Note that in this algorithm we have added a regularization to the estimate of the covariance matrix. This is done in order to ensure stability and to avoid infinite-data-likelihood singularities that arise from singular covariance matrices. This is most often happens when a gene€™s TPM abundance is mostly zero (i.e. there is little data for the gene), giving the multivariate normal layer an opportunity to increase the data likelihood (via the determinant of the covariance matrix) by tightly coupling this genes€™ latent abundance to that of another gene, thereby producing a singularity. This regularization is probabilistically equivalent to adding an Inverse-Wishart prior over $\Sigma^{(m)}$. The parameter $\lambda$ controls the strength of the regularization. In practice, we find $\lambda = 0.1$ leads to good predictive performance, stable (non-singular) covariance matrices, and reasonably quick convergence.
+Note that in this algorithm we have added a regularization to the estimate of the covariance matrix. This is done in order to ensure stability and to avoid infinite-data-likelihood singularities that arise from singular covariance matrices. This is most often happens when a gene's TPM abundance is mostly zero (i.e. there is little data for the gene), giving the multivariate normal layer an opportunity to increase the data likelihood (via the determinant of the covariance matrix) by tightly coupling this gene's latent abundance to that of another gene, thereby producing a singularity. This regularization is probabilistically equivalent to adding an Inverse-Wishart prior over $\Sigma^{(m)}$. The parameter $\lambda$ controls the strength of the regularization. In practice, we find $\lambda = 0.1$ leads to good predictive performance, stable (non-singular) covariance matrices, and reasonably quick convergence.
 
 
 
 
 
-\section{Decoding}
+\section{Prediction}
 
-During decoding we are given new measured TPM measurements for our markers, $t^*_m \in \mathbb{R}^{\textrm{query samples} \times |m|} $, and we must make predictions about the expression of all transcriptional programs and the remaining non-marker genes. To do this we first need an estimate of the log-latent abundances $\hat{z}_m^*$ associated with $t^*_m $. Given the estimates $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)} $ obtained from the training data, we obtain these estimates as 
+During prediction we are given new measured TPM measurements for our markers, $t^*_m \in \mathbb{R}^{\textrm{query samples} \times |m|} $, and we must make predictions about the expression of all transcriptional programs and the remaining non-marker genes. We have two options available to us: 1) Calculate a point (MAP) estimate or 2) calculate the complete posterior distribution over each non-marker gene and transcriptional program in a fully Bayesian manner. The former option is faster, but the second gives more information on the uncertainty of the prediction. We therefore implement both options in Tradict and detail their derivation below. Note that knowing the entire posterior distribution allows one to derive whatever estimator they would like, and so option 2, informationally speaking, supersets option 1. 
+
+\subsection{MAP estimation of gene and program abundances}
+We first need an estimate of the log-latent abundances $\hat{z}_m^*$ associated with $t^*_m $. Given the estimates $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)} $ obtained from the training data, we obtain these estimates as 
 \[
 \hat{z}_m^* = \verb|MAP_z| \left(t_m^*, \textbf{1}_{\textrm{query samples} \times 1}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)} \right)
 \]
@@ -227,9 +230,74 @@ where,
 Here, $\hat{\mu}_j $ and $\hat{\sigma}_{z_{m},z_j}$ represent estimates of the unconditional mean of $z_j$ and the cross-covariance matrix between $z_m$ and $z_j$. These were learned from the training data during encoding.
 
 Though this predictor is unbiased, it does not produce a good prediction for most samples. This is due to the right-skew of the Poisson, which drags its mean away from the most likely values. 
+
+\subsection{Posterior density estimation of gene and program abundances}
+
+The above predictions represent point estimates. Ideally, we would like to know the uncertainty around these estimates. Given measurements of the representative markers, we can estimate the posterior distribution of expression values for transcriptional programs and the non-markers, and therein calculate any point estimates and/or measures of uncertainty. Recall that for transcriptional programs: 
+\begin{align*}
+z_m & \sim \mathcal{N}\left(\mu^{(m)}, \Sigma^{(m)} \right) \\
+s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m}) 
+\end{align*}
+And similarly for genes (among which the marker genes are included) we have: 
+\begin{align*}
+z_m & \sim \mathcal{N}(\mu^{(m)}, \Sigma^{(m)}) \\
+z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
+T_j & \sim \textrm{Continuous-Poisson}(\exp(z_j)o)
+\end{align*}
+
+Given $z_m$, the distribution of expression values are simple normal distributions with analytically available means and covariances. However, because $z_m$ is unknown, we must factor into our estimate its distribution, which is both a function of observed data ($t_m$, $o$) and prior information (in the form of $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$. Our strategy  to estimate the posterior density of programs and non-markers will therefore be to sample from the posterior of $z_m$, and then given these draws, sample from the conditional Normal distribution of each program and non-marker gene.
+
+\subsubsection{Sampling $z_m$ via MCMC} 
+
+To sample $z_m$ we use Metropolis-Hastings Markov Chain Monte Carlo (MCMC) sampling [REF], using the following posterior density function:
+
+\begin{align*}
+p(z_m| o, T_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) & =  \frac{p(T_m | o, z_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(z_m| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) }{ \int_k  p(T_m | o, k, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(k | \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \textrm{d}k } \\
+& \propto \prod_{i=1}^{n}  p(T_{im} | o, z_{im}, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(z_{im}| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \\
+& = \prod_{i=1}^{n} \left[ \prod_{j=1}^{|m|} C_{[\exp(z_{ij})o_i]} [\exp(z_{ij})o_i]^{T_{ij}}  e^{-[\exp(z_{ij})o_i]} / \Gamma(T_{ij} + 1) \right] \\ 
+\end{align*}
+Note that we do not require the marginal distribution for Metropolis-Hastings sampling. 
+
+As our proposal distribution we use:
+\[
+z_m^{(i+1)} = \mathcal{N}\left( z_m^{(i)}, \gamma\mathbb{I}_{|m|\times |m|}\right).
+\]
+Here $z^{(i)}$ is the $i^{th}$ draw from the sampler, and $\gamma$ represents the width (variance) of the proposal distribution. To choose this width, we examine, for a schedule of proposal widths (50 logarithmically spaced widths between $10^{3.5}$ and $10^{-1}$), which width gives an acceptance rate closest to 0.4 [REF]. Using this width, we sample 20,000 times from the sampler. We burn-in the first 100 samples and keep every 100$^{th}$ sample thereafter (to offset the effects of the chain's auto-correlation) as our draws from the distribution. Note that we initialize the chain at the MAP estimate of $z_m$. This ensures the chain is stationary from the beginning.
+
+\subsubsection{Sampling program and gene abundances} 
+Given our $M = 200$ draws, $\left[z^{(i)}_m\right]_{i=1}^{M}$, we can sample from the conditional distribution of each program and gene.
+
+Our $i^{(th)}$ draw from the posterior distribution over all programs is obtained from sampling the following Multivariate-Normal,
+\begin{align*}
+s^{(i)}|z^{(i)}_m & \sim \mathcal{N}\left(\mu_{s| z_{m}^{(i)}}, \Sigma_{s| z_{m}^{(i)}}  \right) 
+\end{align*}
+where
+\begin{align*}
+\mu_{s| z_{m}^{(i)}}  &= \hat{\mu}_s + \left(z_m^{(i)}  - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s} \\
+\Sigma_{s| z_{m}^{(i)}} & = \hat{\Sigma}_{s} -  \hat{\sigma}_{z_{m},s}^T  \textrm{inv}\left( \hat{\Sigma}^{(m)} \right) \hat{\sigma}_{z_{m},s}
+\end{align*}
+
+Similarly, our $i^{(th)}$ draw from the posterior distribution over all genes \emph{could be} obtained from sampling the following Multivariate-Normal,
+\begin{align*}
+z_{-m}^{(i)}|z^{(i)}_m & \sim \mathcal{N}\left(\mu_{z_{-m}| z_{m}^{(i)}}, \Sigma_{z_{-m}| z_{m}^{(i)}}  \right) 
+\end{align*}
+where
+\begin{align*}
+\mu_{z_{-m}| z_{m}^{(i)}}  &= \hat{\mu}_{z_{-m}} + \left(z_m^{(i)}  - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},z_{-m}} \\
+\Sigma_{z_{-m}| z_{m}^{(i)}} & = \hat{\Sigma}_{z_{-m}} -  \hat{\sigma}_{z_{m},z_{-m}}^T  \textrm{inv}\left( \hat{\Sigma}^{(m)} \right) \hat{\sigma}_{z_{m},z_{-m}}
+\end{align*}
+However, given the size of $\Sigma_{z_{-m}| z_{m}^{(i)}}$ (approximately $21000 \times 21000$), this is not easily doable. Recall, though, that one of our basic assumptions is that the conditional mean abundance of all genes given the abundance of our markers has the covariance structure of all genes sufficiently built in. Thus, we assume 
+\[
+\mathcal{N}\left(\mu_{z_{-m}| z_{m}^{(i)}}, \Sigma_{z_{-m}| z_{m}^{(i)}}  \right) \approx \mathcal{N}\left(\mu_{z_{-m}| z_{m}^{(i)}}, \textrm{diag}\left(\Sigma_{z_{-m}| z_{m}^{(i)}} \right) \right)
+\]
+Here $\textrm{diag}(\cdot)$ replaces all off-diagonal entries with zeros. Consequently, we only need to compute the diagonal entries of the conditional covariance matrix, and futhermore, given the conditional mean of each, we can sample it's abundance in parallel and independently of all others.
+
+
+
+
+
+
 \section{References}
 \bibliography{refs}
-
-
 
 \end{document}

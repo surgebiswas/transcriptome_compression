@@ -366,7 +366,12 @@ if true
     
     % Performance vs sample number.
     if false
-        performance_vs_num_samples(Y, qt, tids, sets);
+        if true
+            performance_vs_num_samples(Y, qt, tids, sets);
+        else
+            analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
+        end
+            
     end
     
     

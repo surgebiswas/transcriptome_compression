@@ -4,6 +4,12 @@ function performance_vs_pathway_purity( Y, qt, tids, sets )
 path(genpath('~/GitHub/tradict'), path)
 [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
 
+% Final model for ground truth evaluation
+load('NCBI_SRA_Athaliana_final_tradict_model.mat');
+final_model = model; clear model;
+
+
+
 qt_train = qt(ktrain,:);
 qt_test = qt(~ktrain,:);
 
@@ -30,9 +36,9 @@ for i = 1 : length(pswap)
     
     
     % Actual values
-    z = lag_dataset(T_test, o_test, 'priors', model.lag_priors);
-    zs = standardize(z, 'mu', model.train_mu, 'std', model.train_sig);
-    s = zs*model.geneset.coef;
+    z = lag_dataset(T_test, o_test, 'priors', final_model.lag_priors);
+    zs = standardize(z, 'mu', final_model.train_mu, 'std', final_model.train_sig);
+    s = zs*final_model.geneset.coef;
     
     res.z = z;
     res.s = s;
