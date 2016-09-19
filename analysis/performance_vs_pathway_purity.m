@@ -1,11 +1,11 @@
-function performance_vs_pathway_purity( Y, qt, tids, sets )
+function performance_vs_pathway_purity( Y, qt, tids, sets, organism )
 
 
 path(genpath('~/GitHub/tradict'), path)
 [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
 
 % Final model for ground truth evaluation
-load('NCBI_SRA_Athaliana_final_tradict_model.mat');
+load(['NCBI_SRA_', organism, '_final_tradict_model.mat']);
 final_model = model; clear model;
 
 

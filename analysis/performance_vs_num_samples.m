@@ -1,16 +1,15 @@
-function performance_vs_num_samples( Y, qt, tids, sets )
+function performance_vs_num_samples( Y, qt, tids, sets, organism )
 % Evaluates tradict's performance as a function of increasing number of
 % samples.
 
 path(genpath('~/GitHub/tradict'), path)
 [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
-organism = 'Athaliana';
 
 qt_train = qt(ktrain,:);
 qt_test = qt(~ktrain,:);
 
 % Final model for ground truth evaluation
-load('NCBI_SRA_Athaliana_final_tradict_model.mat');
+load(['NCBI_SRA_', organism, '_final_tradict_model.mat']);
 final_model = model; clear model;
 
 

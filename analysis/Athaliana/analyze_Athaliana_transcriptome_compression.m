@@ -367,7 +367,7 @@ if true
     % Performance vs sample number.
     if false
         if true
-            performance_vs_num_samples(Y, qt, tids, sets);
+            performance_vs_num_samples(Y, qt, tids, sets, 'Athaliana');
         else
             analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
         end
@@ -377,7 +377,7 @@ if true
     
     % Performance vs pathway purity (increasingly random pathways).
     if true
-        performance_vs_pathway_purity( Y, qt, tids, sets );
+        performance_vs_pathway_purity( Y, qt, tids, sets, 'Athaliana' );
     end
 
     if false

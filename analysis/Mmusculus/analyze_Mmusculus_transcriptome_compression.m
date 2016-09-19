@@ -189,12 +189,12 @@ if true
     
     % Performance vs sample number.
     if false
-        performance_vs_num_samples(Y, qt, tids, sets);
+        performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus');
     end
     
     % Performance vs pathway purity (increasingly random pathways).
     if true
-        performance_vs_pathway_purity( Y, qt, tids, sets );
+        performance_vs_pathway_purity( Y, qt, tids, sets, 'Mmusculus');
     end
         
     
