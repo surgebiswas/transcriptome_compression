@@ -17,6 +17,7 @@ end
 repo = 'transcriptome_compression/';
 datadir = [homedir, '/GitHub/data/', repo, 'Mmusculus/'];
 path(genpath([homedir, '/GitHub/', repo]), path);
+path(genpath([homedir, '/GitHub/latent_log']), path);
 cd(datadir);
 tic;
 
