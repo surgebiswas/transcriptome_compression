@@ -32,7 +32,7 @@ for i = 1 : length(pswap)
     
     % Prediction
     T_m = T_test(:,model.S);
-    pred = tradict_predict( T_m, o_test, model, 'calc_credible_intervals', false );
+    pred = tradict_predict( T_m, o_test, model, 'sample_posterior', false );
     
     
     % Actual values
@@ -49,7 +49,7 @@ for i = 1 : length(pswap)
     results{i} = res;
 end
 
-save('perf_vs_program_purity.mat', 'results', 'pswap');
+save('perf_vs_program_purity.mat', 'results', 'pswap', '-v7.3');
 
 
     function s = perturb_sets(s, ts, p)

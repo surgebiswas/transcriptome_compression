@@ -45,7 +45,7 @@ for i = 1 : length(rn_sched)
     
     % Formulate prediction
     T_m = T_test(:,model.S);
-    pred = tradict_predict( T_m, o_test, model, 'calc_credible_intervals', false );
+    pred = tradict_predict( T_m, o_test, model, 'sample_posterior', false );
     
     
     % Actual values
@@ -64,7 +64,7 @@ for i = 1 : length(rn_sched)
     results{i} = res;
 end
 
-save('perf_vs_num_samples_results.mat', 'results', 'ktrain', 'nsamples', 'nsubs', 'rn_sched');
+save('perf_vs_num_samples_results.mat', 'results', 'ktrain', 'nsamples', 'nsubs', 'rn_sched', '-v7.3');
 
 
 

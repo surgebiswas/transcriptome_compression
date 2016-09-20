@@ -1,11 +1,5 @@
 function analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
 
-%load perf_vs_num_samples_results;
-
-% NOTE!! this call must be the same as that in the beginning of
-% performance_vs_num_samples.m
-%[~, ~, ktrain] = partition_data(Y', qt, 0.1); 
-
 
 pcc_p = zeros(length(results), size(results{1}.s,2));
 pcc_g = zeros(length(results), size(results{1}.z,2));
@@ -107,7 +101,7 @@ set(gca, 'XTickLabel', labs(idxset));
 sf = get_standard_figure_font_sizes;
 set(gca, 'FontSize', sf.axis_tick_labels);
 xlabel('Training set size', 'FontSize', sf.axis_labels);
-ylabel('Unexplained variance', 'FontSize', sf.axis_labels);
+ylabel('Normalized unexp. var.', 'FontSize', sf.axis_labels);
 plotSave('figures/perf_vs_num_samples/perf_vs_num_samples_uvar.png');
 
 close all
