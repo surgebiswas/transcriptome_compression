@@ -373,6 +373,7 @@ if true
         if true
             performance_vs_num_samples(Y, qt, tids, sets, 'Athaliana');
         else
+            load('perf_vs_num_samples_results.mat');
             analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
         end
             
@@ -381,7 +382,12 @@ if true
     
     % Performance vs pathway purity (increasingly random pathways).
     if true
-        performance_vs_pathway_purity( Y, qt, tids, sets, 'Athaliana' );
+        if true
+            performance_vs_pathway_purity( Y, qt, tids, sets, 'Athaliana' );
+        else
+            load('perf_vs_program_purity.mat');
+            analyze_performance_vs_pathway_purity(qt, results, pswap, ktrain, 'compute_summaries', true);
+        end
     end
 
     if false

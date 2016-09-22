@@ -1,6 +1,8 @@
-function analyze_performance_vs_pathway_purity(qt, results, pswap, ktrain)
+function analyze_performance_vs_pathway_purity(qt, results, pswap, ktrain, varargin)
 
+csummaries = setParam(varargin, 'compute_summaries', true); % compute summary variables, else make plots.
 
+if csummaries
     pcc_p = zeros(length(results), size(results{1}.s,2));
     pcc_g = zeros(length(results), size(results{1}.z,2));
     uvar_p = pcc_p;
@@ -17,14 +19,15 @@ function analyze_performance_vs_pathway_purity(qt, results, pswap, ktrain)
         pcc_p(i,:) = rsq_and_slope(sa, sha, 'abs', true); % program sign is arbitrary.
         pcc_g(i,:) = rsq_and_slope(za, zha);
 
-        
         direc = sign(rsq_and_slope(sa, sha));
         uvar_p(i,:) = var(sa - sha.*repmat(direc,size(sha,1),1))./var(sa);
         uvar_g(i,:) = var(za - zha)./var(za);
     end
 
+    save('perf_vs_pathway_purity_summaries.mat', 'pcc_p', 'pcc_g', 'uvar_p', 'uvar_g');
+else   
     
-    
+    load('perf_vs_pathway_purity_summaries.mat');
     figure;
     mm = median(pcc_p, 2)';
     L = prctile(pcc_p', 15);
@@ -90,5 +93,6 @@ function analyze_performance_vs_pathway_purity(qt, results, pswap, ktrain)
     ylabel('Normalized unexp. var.', 'FontSize', sf.axis_labels);
     plotSave('figures/perf_vs_pathway_purity/uvar_vs_pathway_purity.png');
     close
+end
     
 end
