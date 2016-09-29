@@ -189,19 +189,25 @@ if false
     
    % Performance vs sample number.
     if true
-        if false
-            performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus');
+        timeonly = true;
+        
+        if timeonly
+            performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus', 'timeonly', true);
         else
-            load('perf_vs_num_samples_results.mat');
-            analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
+            if false
+                performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus');
+            else
+                load('perf_vs_num_samples_results.mat');
+                analyze_performance_vs_num_samples(qt, results, nsamples, nsubs, ktrain)
+            end
         end
             
     end
     
     
     % Performance vs pathway purity (increasingly random pathways).
-    if true
-        if true
+    if false
+        if false
             performance_vs_pathway_purity( Y, qt, tids, sets, 'Mmusculus' );
         else
             load('perf_vs_program_purity.mat');

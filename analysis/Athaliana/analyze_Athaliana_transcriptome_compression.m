@@ -128,7 +128,7 @@ if false;
     logcov = NCBI_SRA_Athalianal_COV_density_plot(Y); 
 end
 
-% Perc. variation explained vs eigengene.
+% Perc. variation explained vs eigengene.[
 if false; 
     [coef, pexp] = pexp_vs_components(lY, 'Athaliana'); 
 end
@@ -287,7 +287,7 @@ if false
 end
 
 % Gene set analysis.
-if true
+if false
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Athaliana_representative_gene_set_02-Apr-2016.mat');
 %     load('NCBI_SRA_Athaliana_cluster_idx_for_raw_vs_reconstructed_heatmap.mat');
 %     [sY, train_mu, train_sig] = standardize(lY);

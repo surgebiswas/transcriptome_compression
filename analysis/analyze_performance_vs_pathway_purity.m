@@ -57,6 +57,8 @@ else
     set(gca, 'FontSize', sf.axis_tick_labels);
     xlabel('Percentage of genes swapped', 'FontSize', sf.axis_labels);
     ylabel('PCC', 'FontSize', sf.axis_labels);
+    %set(gca, 'XTick', 'log');
+    
     plotSave('figures/perf_vs_pathway_purity/pcc_vs_pathway_purity.png');
     close
     
@@ -91,6 +93,8 @@ else
     set(gca, 'FontSize', sf.axis_tick_labels);
     xlabel('Percentage of genes swapped', 'FontSize', sf.axis_labels);
     ylabel('Normalized unexp. var.', 'FontSize', sf.axis_labels);
+    
+    
     plotSave('figures/perf_vs_pathway_purity/uvar_vs_pathway_purity.png');
     close
 end

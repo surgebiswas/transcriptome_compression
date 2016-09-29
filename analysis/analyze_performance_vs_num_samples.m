@@ -29,11 +29,11 @@ else
     
     load('perf_vs_num_samples_summaries.mat');
     figure;
-    mm = median(pcc_p,2)';
+    mm = median(pcc_p,2, 'omitnan')';
     L = prctile(pcc_p', 15);
     U = prctile(pcc_p', 85);
 
-    jbfill(nsamples, U, L, 'r', 'r', true, 0.3);
+    fh(1) = jbfill(nsamples, U, L, 'r', 'r', true, 0.3);
     hold on
     h(1) = plot(nsamples, mm, '-r', 'LineWidth', 2);
 
@@ -42,14 +42,14 @@ else
     L = prctile(pcc_g', 15);
     U = prctile(pcc_g', 85);
 
-    jbfill(nsamples, U, L, 'g', 'g', true, 0.3);
+    fh(2) = jbfill(nsamples, U, L, 'g', 'g', true, 0.3);
     hold on
     h(2) = plot(nsamples, mm, '-g', 'LineWidth', 2);
     legend(h, 'tr. programs', 'genes', 'Location', 'SouthEast');
     axis([nsamples(1), nsamples(end), 0 1]);
     axis square
 
-    idxset = [1, 15, 18, length(nsamples)];
+    idxset = [1,5, 10, length(nsamples)];
     set(gca, 'XTick', nsamples(idxset))
     set(gca, 'YTick', 0:0.1:1);
 
@@ -58,12 +58,14 @@ else
         labs{i} = [num2str(nsamples(i)), ' (', num2str(nsubs(i)), ')'];
     end
     set(gca, 'XTickLabel', labs(idxset));
-     %rotateXLabels(gca, 45);
+    %try; rotateXLabels(gca, 45);end
 
     sf = get_standard_figure_font_sizes;
     set(gca, 'FontSize', sf.axis_tick_labels);
     xlabel('Training set size', 'FontSize', sf.axis_labels);
     ylabel('PCC', 'FontSize', sf.axis_labels);
+    set(gca, 'XScale', 'log');
+
     plotSave('figures/perf_vs_num_samples/perf_vs_num_samples_pcc.png');
 
 
@@ -74,7 +76,7 @@ else
     %%%% -----  %%%%
 
     figure;
-    mm = median(uvar_p,2)';
+    mm = median(uvar_p,2, 'omitnan')';
     L = prctile(uvar_p', 15);
     U = prctile(uvar_p', 85);
 
@@ -91,12 +93,13 @@ else
     hold on
     h(2) = plot(nsamples, mm, '-g', 'LineWidth', 2);
     legend(h, 'tr. programs', 'genes', 'Location', 'NorthEast');
-    axis([nsamples(1), nsamples(end), 0 1]);
+    v = axis;
+    axis([nsamples(1), nsamples(end), 0 v(4)]);
     axis square
 
-    idxset = [1, 15, 18, length(nsamples)];
+    idxset = [1,5, 10, length(nsamples)];
     set(gca, 'XTick', nsamples(idxset))
-    set(gca, 'YTick', 0:0.1:1);
+    set(gca, 'YTick', 0:0.2:v(4));
 
     labs = {};
     for i = 1 : length(nsamples)
@@ -109,6 +112,8 @@ else
     set(gca, 'FontSize', sf.axis_tick_labels);
     xlabel('Training set size', 'FontSize', sf.axis_labels);
     ylabel('Normalized unexp. var.', 'FontSize', sf.axis_labels);
+    set(gca, 'XScale', 'log');
+
     plotSave('figures/perf_vs_num_samples/perf_vs_num_samples_uvar.png');
 
     close all

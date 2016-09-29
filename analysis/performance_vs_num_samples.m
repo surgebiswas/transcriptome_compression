@@ -1,6 +1,8 @@
-function performance_vs_num_samples( Y, qt, tids, sets, organism )
+function performance_vs_num_samples( Y, qt, tids, sets, organism, varargin )
 % Evaluates tradict's performance as a function of increasing number of
 % samples.
+
+timeonly = setParam(varargin, 'timeonly', false);
 
 path(genpath('~/GitHub/tradict'), path)
 [ytrain, ytest, ktrain] = partition_data(Y', qt, 0.1);
@@ -43,28 +45,34 @@ for i = 1 : length(rn_sched)
     % Train Tradict
     model = tradict_train( T, o, tids, sets );
     
-    % Formulate prediction
-    T_m = T_test(:,model.S);
-    pred = tradict_predict( T_m, o_test, model, 'sample_posterior', false );
-    
-    
-    % Actual values
-    z = lag_dataset(T_test, o_test, 'priors', final_model.lag_priors);
-    zs = standardize(z, 'mu', final_model.train_mu, 'std', final_model.train_sig);
-    s = zs*final_model.geneset.coef;
-    
-    
-    
-    res.z = z;
-    res.s = s;
-    res.z_hat = pred.genes.z_hat;
-    res.s_hat = pred.programs.s_hat;
-    
-    
-    results{i} = res;
+    if timeonly
+        results{i} = model.timing;
+    else
+        % Formulate prediction
+        T_m = T_test(:,model.S);
+        pred = tradict_predict( T_m, o_test, model, 'sample_posterior', false );
+
+
+        % Actual values
+        z = lag_dataset(T_test, o_test, 'priors', final_model.lag_priors);
+        zs = standardize(z, 'mu', final_model.train_mu, 'std', final_model.train_sig);
+        s = zs*final_model.geneset.coef;
+        
+        res.z = z;
+        res.s = s;
+        res.z_hat = pred.genes.z_hat;
+        res.s_hat = pred.programs.s_hat;
+
+
+        results{i} = res;
+    end
 end
 
-save('perf_vs_num_samples_results.mat', 'results', 'ktrain', 'nsamples', 'nsubs', 'rn_sched', '-v7.3');
+if timeonly
+    save('perf_vs_num_samples_results_timeonly.mat', 'results', 'ktrain', 'nsamples', 'nsubs', 'rn_sched', '-v7.3');
+else
+    save('perf_vs_num_samples_results.mat', 'results', 'ktrain', 'nsamples', 'nsubs', 'rn_sched', '-v7.3');
+end
 
 
 
