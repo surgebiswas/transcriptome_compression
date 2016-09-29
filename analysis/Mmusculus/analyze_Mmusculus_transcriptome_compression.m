@@ -184,7 +184,7 @@ end
 
 
 % Gene set analysis.
-if false
+if true
     load('~/GitHub/transcriptome_compression/analysis/gene_ontology/Mmusculus_representative_gene_set_02-Apr-2016.mat');
     
    % Performance vs sample number.
