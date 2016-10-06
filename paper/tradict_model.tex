@@ -69,11 +69,11 @@ For a matrix $A$, $A_{:i}$ and $A_{i:}$ index the $i^{th}$ column and row, respe
 
 \section{Model} \label{model}
 
-Tradict uses a Continuous-Poisson Multivariate Normal (CP-MVN) hierarchical model to model the expression of transcriptional programs and all genes in the transcriptome. Multivariate Normal hierarchies have been explored in the past as a means of modeling correlation structure among count based random variables [REF]. However, given we will be working with abundances as transcripts per million (TPM), which are non-negative (can equal zero) and fractional, we  relax the integral assumption of the Poisson so it is continuous on $[0, \infty)$.   Specifically, we define the continuous relaxation of the Poisson distribution (hereafter, Continuous-Poisson) to have the following density function:
+Tradict uses a Continuous-Poisson Multivariate Normal (CP-MVN) hierarchical model to model the expression of transcriptional programs and all genes in the transcriptome. Multivariate Normal hierarchies have been explored in the past as a means of modeling correlation structure among count based random variables \cite{Ho1989,Madsen2007,Wu2016,Biswas2015}. However, given we will be working with abundances as transcripts per million (TPM), which are non-negative (can equal zero) and fractional, we  relax the integral assumption of the Poisson so it is continuous on $[0, \infty)$.   Specifically, we define the continuous relaxation of the Poisson distribution (hereafter, Continuous-Poisson) to have the following density function:
 \[
 f(x|\lambda) = C_\lambda \frac{e^{-\lambda} \lambda^x}{\Gamma(x + 1)}
 \]
-where $C_\lambda$ is a normalization constant [REF]. The mean of this distribution is given by $\lambda$, just as the Poisson.
+where $C_\lambda$ is a normalization constant. The mean of this distribution is given by $\lambda$, just as the Poisson.
 
 We begin by building a predictive model of gene expression, and thereafter discuss a predictive model for the expression of transcriptional programs. Let $z_j$ denote the log-\emph{latent abundance} of gene $j$, such that $\exp(z_j)$ is the \emph{latent abundance} of that gene (in TPM) whose measured abundance is given by $t_j$. Let $T_j = t_jo$ be the measured total number of transcripts of gene $j$. Here o is the sequencing depth in millions of reads of the sample under consideration. We assume then, 
 \begin{align*}
@@ -85,7 +85,7 @@ where $\mu$ and $\Sigma$ are of dimension 1 $\times$ $\#$-genes and $\#$-genes $
 
 Note that we could model the TPM measurements directly in the second layer by assuming $t_j \sim \textrm{Continuous-Poisson}(\exp(z_j))$; however, this formulation does not consider sequencing depth, which can be a valuable source of information when inferring latent abundances for rare/poorly sampled genes \cite{Biswas2016a}. 
 
-During decoding, we are interested in building a predictive model between markers and all genes in the transcriptome. Therefore, we need to consider a conditional model of the transcriptome given the log-latent abundances of the markers. Let $m$ be the set of indices for the given panel of selected markers, which are the subset of genes Tradict selects as representative of the transcriptome. To perform prediction we therefore need $p(z_{-m} | z_m)$, and given this we would like to ultimately compute as our estimate of the abundance of all genes in the transcriptome $\hat{T} = \argmax_T p(T | z_m)$.  We have, 
+During prediction, we are interested in building a predictive model between markers and all genes in the transcriptome. Therefore, we need to consider a conditional model of the transcriptome given the log-latent abundances of the markers. Let $m$ be the set of indices for the given panel of selected markers, which are the subset of genes Tradict selects as representative of the transcriptome. To perform prediction we therefore need $p(z_{-m} | z_m)$.  We have, 
 \begin{align*}
 z_m & \sim \mathcal{N}(\mu^{(m)}, \Sigma^{(m)}) \\
 z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
@@ -99,7 +99,7 @@ Given the expression of a transcriptional program is a linear combination of the
 z_m & \sim \mathcal{N}\left(\mu^{(m)}, \Sigma^{(m)} \right) \\
 s|z_m & \sim \mathcal{N}(\mu_{s|z_m}, \Sigma_{s|z_m}) 
 \end{align*}
-To use these models for prediction, we must learn their parameters from training data. This would complete the process of encoding described in the Supplemental Information. Specifically, we need to learn $\mu^{(m)}$, $\Sigma^{(m)}$, $\mu_s$, $\mu_{z_{-m}}$, $\sigma_{z_m,s}$ and $\sigma_{z_m,z_{-m}}$.
+To use these models for prediction, we must learn their parameters from training data. This would complete the process of training described in the Supplemental Information. Specifically, we need to learn $\mu^{(m)}$, $\Sigma^{(m)}$, $\mu_s$, $\mu_{z_{-m}}$, $\sigma_{z_m,s}$ and $\sigma_{z_m,z_{-m}}$.
 
 \section{Training} \label{inference}
 
@@ -200,7 +200,7 @@ Our estimate for the expression of all transcriptional programs is given by
 \[
 \argmax_{s^*} p(s^* | \hat{z}_m^*) = \mathbb{E}[s^* |\hat{z}_m^* ] = \mu_{s^* |\hat{z}_m^* } = \hat{\mu}_s + \left(\hat{z}_m^*  - \hat{\mu}^{(m)} \right)\textrm{inv}\left( \hat{\Sigma}^{(m)} \right)\hat{\sigma}_{z_{m},s}.
 \]
-Here, $\hat{\mu}_s $ and $\hat{\sigma}_{z_{m},s}$ represent estimates of the unconditional mean of $s$ and the cross-covariance matrix between $z_m$ and $s$ previously learned during encoding.
+Here, $\hat{\mu}_s $ and $\hat{\sigma}_{z_{m},s}$ represent estimates of the unconditional mean of $s$ and the cross-covariance matrix between $z_m$ and $s$ previously learned during training.
 
 Similarly, for the entire transcriptome we have, 
 \[
@@ -245,11 +245,11 @@ z_{-m}|z_m & \sim \mathcal{N}(\mu_{z_{-m}|z_m}, \Sigma_{z_{-m}|z_m}) \\
 T_j & \sim \textrm{Continuous-Poisson}(\exp(z_j)o)
 \end{align*}
 
-Given $z_m$, the distribution of expression values are simple normal distributions with analytically available means and covariances. However, because $z_m$ is unknown, we must factor into our estimate its distribution, which is both a function of observed data ($t_m$, $o$) and prior information (in the form of $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$. Our strategy  to estimate the posterior density of programs and non-markers will therefore be to sample from the posterior of $z_m$, and then given these draws, sample from the conditional Normal distribution of each program and non-marker gene.
+Given $z_m$, the distribution of expression values are simple normal distributions with analytically available means and covariances. However, because $z_m$ is unknown, we must factor into our estimate its distribution, which is both a function of observed data ($t_m$, $o$) and prior information (in the form of $\hat{\mu}^{(m)}$ and $\hat{\Sigma}^{(m)}$). Our strategy  to estimate the posterior density of programs and non-markers will therefore be to sample from the posterior of $z_m$, and then given these draws, sample from the conditional Normal distribution of each program and non-marker gene.
 
 \subsubsection{Sampling $z_m$ via MCMC} 
 
-To sample $z_m$ we use Metropolis-Hastings Markov Chain Monte Carlo (MCMC) sampling [REF], using the following posterior density function:
+To sample $z_m$ we use Metropolis-Hastings Markov Chain Monte Carlo (MCMC) sampling \cite{Gelman2013}, using the following posterior density function:
 
 \begin{align*}
 p(z_m| o, T_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) & =  \frac{p(T_m | o, z_m, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(z_m| \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) }{ \int_k  p(T_m | o, k, \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) p(k | \hat{\mu}^{(m)}, \hat{\Sigma}^{(m)}) \textrm{d}k } \\
@@ -262,7 +262,7 @@ As our proposal distribution we use:
 \[
 z_m^{(i+1)} = \mathcal{N}\left( z_m^{(i)}, \gamma\mathbb{I}_{|m|\times |m|}\right).
 \]
-Here $z^{(i)}$ is the $i^{th}$ draw from the sampler, and $\gamma$ represents the width (variance) of the proposal distribution. To choose this width, we examine, for a schedule of proposal widths (50 logarithmically spaced widths between $10^{3.5}$ and $10^{-1}$), which width gives an acceptance rate closest to 0.4 [REF]. Using this width, we sample 20,000 times from the sampler. We burn-in the first 100 samples and keep every 100$^{th}$ sample thereafter (to offset the effects of the chain's auto-correlation) as our draws from the distribution. Note that we initialize the chain at the MAP estimate of $z_m$. This ensures the chain is stationary from the beginning.
+Here $z^{(i)}$ is the $i^{th}$ draw from the sampler, and $\gamma$ represents the width (variance) of the proposal distribution. To choose this width, we examine, for a schedule of proposal widths (50 logarithmically spaced widths between $10^{3.5}$ and $10^{-1}$), which width gives an acceptance rate closest to 0.234 -- the ideal rate for a high dimensional parameter \cite{Gelman2013}. Using this width, we sample 20,100 times from the sampler. We burn-in the first 100 samples and keep every 100$^{th}$ sample thereafter (to offset the effects of the chain's auto-correlation) as our draws from the distribution. Note that we initialize the chain at the MAP estimate of $z_m$. This ensures the chain is stationary from the beginning.
 
 \subsubsection{Sampling program and gene abundances} 
 Given our $M = 200$ draws, $\left[z^{(i)}_m\right]_{i=1}^{M}$, we can sample from the conditional distribution of each program and gene.
@@ -290,9 +290,9 @@ However, given the size of $\Sigma_{z_{-m}| z_{m}^{(i)}}$ (approximately $21000 
 \[
 \mathcal{N}\left(\mu_{z_{-m}| z_{m}^{(i)}}, \Sigma_{z_{-m}| z_{m}^{(i)}}  \right) \approx \mathcal{N}\left(\mu_{z_{-m}| z_{m}^{(i)}}, \textrm{diag}\left(\Sigma_{z_{-m}| z_{m}^{(i)}} \right) \right)
 \]
-Here $\textrm{diag}(\cdot)$ replaces all off-diagonal entries with zeros. Consequently, we only need to compute the diagonal entries of the conditional covariance matrix, and futhermore, given the conditional mean of each, we can sample it's abundance in parallel and independently of all others.
+Here $\textrm{diag}(\cdot)$ replaces all off-diagonal entries with zeros. Consequently, we only need to compute the diagonal entries of the conditional covariance matrix.  Futhermore, given the conditional mean of each gene, we can sample it's abundance in parallel and independently of all others.
 
-
+From the $M$ samples we have from the conditional posterior distribution of each program and gene, we can estimate properties of the posterior distribution. As point estimates for expression we can use the posterior mean or mode. As confidence estimates for expression we can build credible intervals.  
 
 
 

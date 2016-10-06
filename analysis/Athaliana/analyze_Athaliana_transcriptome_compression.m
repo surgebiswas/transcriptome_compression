@@ -365,7 +365,7 @@ if false
     
     % Analysis of predicted posterior distributions of programs and genes.
     if true
-        
+        analyze_posterior_predictive_dist( Y, qt, tids, sets )
     end
     
     % Performance vs sample number.

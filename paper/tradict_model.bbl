@@ -1,5 +1,30 @@
 \begin{thebibliography}{1}
 
+\bibitem{Ho1989}
+C~H Ho and Hong Kong.
+\newblock {The multivariate Poisson-log normal distribution}.
+\newblock 2, 1989.
+
+\bibitem{Madsen2007}
+L.~Madsen and D.~Dalthorp.
+\newblock {Simulating correlated count data}.
+\newblock {\em Environmental and Ecological Statistics}, 14(2):129--148, March
+  2007.
+
+\bibitem{Biswas2015}
+Surojit Biswas, Meredith Mcdonald, Derek~S Lundberg, Jeffery~L Dangl, and
+  Vladimir Jojic.
+\newblock {Learning Microbial Interaction Networks from Metagenomic Count
+  Data}.
+\newblock In {\em Research in Computational Molecular Biology}, volume~1, pages
+  32--43, 2015.
+
+\bibitem{Wu2016}
+Hao Wu, Xinwei Deng, and Naren Ramakrishnan.
+\newblock {Sparse Estimation of Multivariate Poisson Log-Normal Models from
+  Count Data}.
+\newblock {\em arXiv}, 2016.
+
 \bibitem{Biswas2016a}
 Surojit Biswas.
 \newblock {The latent logarithm}.
@@ -9,5 +34,11 @@ Surojit Biswas.
 Julian Besag.
 \newblock {On the Statistical Analysis of Dirty Pictures}.
 \newblock {\em Journal of the Royal Statistical Society}, 48(3):259--302, 1986.
+
+\bibitem{Gelman2013}
+Andrew Gelman, John~B. Carlin, Hal~S. Stern, David~B. Dunson, Aki Vehtari, and
+  Donald~B. Rubin.
+\newblock {\em {Bayesian Data Analysis}}.
+\newblock Chapman \& Hall, 3rd edition, 2013.
 
 \end{thebibliography}

@@ -42,19 +42,21 @@ end
 
 
 figure;
-subplot(1,2,1)
+subplot(1,2,2)
 plot([0 1], [0 1], '--k', 'LineWidth', 2);
 hold on
 serr = sqrt(0.01*cs.*(1 - cs));
 plot(cs, ac, '-r', 'LineWidth', 2);
 jbfill(cs, ac+serr, ac-serr, 'r', 'r', true, 0.3);
 xlabel('Credible interval size', 'FontSize', 18);
-ylabel('Prop. test set contained', 'FontSize', 18);
 set(gca, 'FontSIze', 14);
 title('tr. programs', 'FontSize', 20);
+set(gca, 'XTick', 0:0.2:1);
+set(gca, 'XTickLabel', 100*[0:0.2:1]);
+set(gca, 'YTickLabel', 100*[0:0.2:1]);
 axis square
 
-subplot(1,2,2);
+subplot(1,2,1);
 plot([0 1], [0 1], '--k', 'LineWidth', 2);
 hold on
 serr = sqrt(0.01*cs.*(1 - cs));
@@ -62,7 +64,11 @@ plot(csg, acg, '-g', 'LineWidth', 2);
 jbfill(csg, acg+serr, acg-serr, 'g', 'g', true, 0.3);
 xlabel('Credible interval size', 'FontSize', 18);
 set(gca, 'FontSIze', 14);
+ylabel('Perc. of test set contained', 'FontSize', 18);
 title('genes', 'FontSize', 20);
+set(gca, 'XTick', 0:0.2:1);
+set(gca, 'XTickLabel', 100*[0:0.2:1]);
+set(gca, 'YTickLabel', 100*[0:0.2:1]);
 axis square
 
 

@@ -192,7 +192,43 @@ if true
         timeonly = true;
         
         if timeonly
-            performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus', 'timeonly', true);
+            if true
+                performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus', 'timeonly', true);
+            else
+                load perf_vs_num_samples_results_timeonly.mat;
+
+                lag = [];
+                cluster = [];
+                somp = [];
+                pmvn = [];
+
+                for i = 1 : length(results)
+                    lag = [lag, results{i}.lag];
+                    cluster = [cluster, results{i}.cluster];
+                    somp = [somp, results{i}.somp];
+                    pmvn = [pmvn, results{i}.pmvn];
+                end
+
+                total = sum([lag; cluster; somp; pmvn]);
+
+                figure;
+                hold on
+                plot(nsamples, [lag; cluster; somp; pmvn]', '-', 'LineWidth', 2);
+                plot(nsamples, total, '-k', 'LineWidth', 2);
+
+
+                axis tight;
+                axis square
+                legend('lag', 'cluster', 'SOMP', 'PMVN', 'Total', 'Location', 'NorthWest');
+                set(gca, 'FontSize', 18);
+                xlabel('Number of samples', 'FontSize', 20);
+                ylabel('Time (s)', 'FontSize', 20);
+                xt = get(gca, 'XTick');
+                set(gca, 'XTick', [min(nsamples),  xt, max(nsamples)]);
+                plotSave('figures/Mmusculus_timing_analysis.png');
+                close
+            end
+        
         else
             if false
                 performance_vs_num_samples(Y, qt, tids, sets, 'Mmusculus');

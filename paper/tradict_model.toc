@@ -3,9 +3,9 @@
 \contentsline {section}{\numberline {3}Training}{2}
 \contentsline {subsection}{\numberline {3.1}Inference of $z_m$ given $\mu ^{(m)}$ and $\Sigma ^{(m)}$}{3}
 \contentsline {subsection}{\numberline {3.2}Complete inference of $\mu ^{(m)}$, $\Sigma ^{(m)}$, and $z_m$}{4}
-\contentsline {section}{\numberline {4}Prediction}{4}
+\contentsline {section}{\numberline {4}Prediction}{5}
 \contentsline {subsection}{\numberline {4.1}MAP estimation of gene and program abundances}{5}
-\contentsline {subsection}{\numberline {4.2}Posterior density estimation of gene and program abundances}{5}
+\contentsline {subsection}{\numberline {4.2}Posterior density estimation of gene and program abundances}{6}
 \contentsline {subsubsection}{\numberline {4.2.1}Sampling $z_m$ via MCMC}{6}
-\contentsline {subsubsection}{\numberline {4.2.2}Sampling program and gene abundances}{6}
-\contentsline {section}{\numberline {5}References}{7}
+\contentsline {subsubsection}{\numberline {4.2.2}Sampling program and gene abundances}{7}
+\contentsline {section}{\numberline {5}References}{8}
