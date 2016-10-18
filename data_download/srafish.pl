@@ -202,6 +202,29 @@ sub run_fishhook {
 	execute_cmd("fishhook.pl $run $out/$run $download_protocol $ssh_key", $EXECUTE);
 }
 
+sub run_kallisto {
+	my $out = shift;
+	my $run = shift;
+	my $index = shift;
+	my $nt = shift;
+	my $EXECUTE = shift;
+	
+	my $cmd;
+	if (-e "$out/$run/$run\_2.fastq") {
+		# Data is paired end.
+		execute_cmd("kallisto quant -i $index -o $out/$run -t $nt $out/$run/$run\_1.fastq $out/$run/$run\_2.fastq", $EXECUTE);
+		execute_cmd("rm $out/$run/$run\_1.fastq; rm $out/$run/$run\_2.fastq", $EXECUTE);
+	}
+	else {
+		# Data is single end.
+		execute_cmd("kallisto quant -i $index -o $out/$run --single -l 200 -s 40 -t $nt $out/$run/$run\_1.fastq", $EXECUTE);
+		execute_cmd("rm $out/$run/$run\_1.fastq", $EXECUTE);
+	}
+	
+	# reads.sfc is a reasonably large file produced by sailfish, which we don't need for downstream analysis
+	execute_cmd("rm $out/$run/abundance.h5", $EXECUTE);
+}
+
 sub run_sailfish {
 	my $out = shift;
 	my $run = shift;
