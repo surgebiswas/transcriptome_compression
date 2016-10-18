@@ -19,7 +19,7 @@ my $srrid		 = shift;
 my $outdir		 = shift;
 my $method		 = shift;
 my $openssh_key  = shift;
-my $BANDWIDTH	 = "400m";
+my $BANDWIDTH	 = "1000m";
 my $cmd;
 
 # Note $openssh_key must be a full/absolute path.
