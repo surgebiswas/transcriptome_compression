@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-# srafish.pl - v0.13
+# srafish.pl - v1.13
+# Now runs on kallisto
 # by Surge Biswas, Konstantin Kerner
 
 use strict;
@@ -42,9 +43,9 @@ die <<USAGE
 
 USAGE: srafish.pl 
 	-t  Path to a query table (required)
-	-i  Sailfish index path (required)
+	-i  Kallisto index path (required)
 	-s  SSH key for aspera (required)
-	-n  Number of threads to use when running Sailfish (default: 6)
+	-n  Number of threads to use when running Kallisto (default: 1)
 	-o  Path to output directory (default: working directory)
 	-d  Path to file that contains a list of SRA IDs that are NOT to be processed (optional)
 	-p  Download protocol to be used (-d aspera|ftp - default:aspera)
@@ -59,11 +60,11 @@ if $help;
 ## 0. Parameter checks and echo.
 my $errmessage = "";
 $errmessage = $errmessage . "Path to query table required.\n" unless $query_table;
-$errmessage = $errmessage . "Sailfish index path required.\n" unless $index;
+$errmessage = $errmessage . "Kallisto index path required.\n" unless $index;
 $errmessage = $errmessage . "SSH key for aspera required.\n" unless $ssh_key or $download_protocol ne "aspera";
 die $errmessage if $errmessage;
 
-$nthreads = 6 unless $nthreads;
+$nthreads = 1 unless $nthreads;
 $download_protocol = "aspera" unless $download_protocol;
 $ssh_key = "NA" if $download_protocol ne "aspera";
 $min_num_reads = 4000000 unless $min_num_reads;
@@ -72,7 +73,7 @@ $out =~ s/\/$//g;
 
 print "Query table:             $query_table\n";
 print "Output directory:        $out\n";
-print "Sailfish index:          $index\n";
+print "Kallisto index:          $index\n";
 print "SSH Key:                 $ssh_key\n";
 print "Do not process list:     $do_not_process_list\n" if $do_not_process_list;
 print "Do not process list:     not provided\n" unless $do_not_process_list;
@@ -92,7 +93,7 @@ print  "\nQuery table found at $query_table! $num_queries queries identified\n";
 ## 2. Read in the 'do not process' list.
 my $do_not_process = read_do_not_process_list($do_not_process_list);
 
-## 3. Download, fastq-dump, and Sailfish query results.
+## 3. Download, fastq-dump, and Kallisto query results.
 my $i = 1;
 my ($run, $qdetails);
 execute_cmd("mkdir $out", $EXECUTE) unless -d $out;
@@ -112,12 +113,13 @@ while (<$query_results>) {
 		sub_sample($out, $run, $qdetails, $max_num_reads, $EXECUTE) if $qdetails -> {nreads} > $max_num_reads;
 		
 		# Run sailfish to quantify transcript abundances.
-		run_sailfish($out, $run, $index, $nthreads, $EXECUTE);
-        		
+		#run_sailfish($out, $run, $index, $nthreads, $EXECUTE);
+        	run_kallisto($out, $run, $index, $nthreads, $EXECUTE);
+		
 		if (processed_to_completion($out, $run)) {
-            # Remove the first 6 (header) lines from quant_bias_corrected.sf to
-            # make it easier to parse this file downstream
-            remove_header_lines_from_file("$out/$run/quant_bias_corrected.sf", 6, $EXECUTE);
+            		# Remove the first 6 (header) lines from quant_bias_corrected.sf to
+            		# make it easier to parse this file downstream
+            		#remove_header_lines_from_file("$out/$run/quant_bias_corrected.sf", 6, $EXECUTE);
             
 			print "Run $run finished successfully!\n";
 		} else {
