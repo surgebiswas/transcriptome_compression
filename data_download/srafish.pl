@@ -221,7 +221,6 @@ sub run_kallisto {
 		execute_cmd("rm $out/$run/$run\_1.fastq", $EXECUTE);
 	}
 	
-	# reads.sfc is a reasonably large file produced by sailfish, which we don't need for downstream analysis
 	execute_cmd("rm $out/$run/abundance.h5", $EXECUTE);
 }
 
@@ -311,8 +310,8 @@ sub processed_to_completion {
 	my $outdir = shift;
 	my $rundir = shift;
 	
-	if (-e "$outdir/$rundir/quant_bias_corrected.sf") {
-		$complete = 1 if -s "$outdir/$rundir/quant_bias_corrected.sf" >= 500000;
+	if (-e "$outdir/$rundir/run_info.json") {
+		$complete = 1 if -s "$outdir/$rundir/abundance.tsv" >= 80000;
 	}
 	return $complete;
 }
